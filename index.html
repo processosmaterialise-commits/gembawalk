@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f766e">
+<title>Quadro Produção CNC</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+--pri:#0f766e;--pri-dk:#115e59;--pri-lt:#ccfbf1;
+--bg:#f8fafc;--card:#ffffff;
+--tx:#0f172a;--tx2:#64748b;--tx3:#94a3b8;
+--bd:#e2e8f0;
+--ok-bg:#dcfce7;--ok-tx:#15803d;
+--err-bg:#fee2e2;--err-tx:#b91c1c;--err-bd:#fca5a5;
+--wrn-bg:#fef9c3;--wrn-tx:#a16207;--wrn-bd:#fde047;
+--info-bg:#dbeafe;--info-tx:#1d4ed8;
+--r:12px;--rl:16px;
+--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
+}
+@media(prefers-color-scheme:dark){:root{
+--pri:#14b8a6;--pri-dk:#0d9488;--pri-lt:#134e4a;
+--bg:#0f172a;--card:#1e293b;
+--tx:#f1f5f9;--tx2:#94a3b8;--tx3:#64748b;--bd:#334155;
+--ok-bg:#052e16;--ok-tx:#4ade80;
+--err-bg:#450a0a;--err-tx:#f87171;--err-bd:#7f1d1d;
+--wrn-bg:#422006;--wrn-tx:#facc15;--wrn-bd:#713f12;
+--info-bg:#172554;--info-tx:#60a5fa;
+--shadow:0 1px 3px rgba(0,0,0,.3);
+}}
+html{scroll-behavior:smooth;}
+body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:calc(72px + env(safe-area-inset-bottom,0));}
+.app{max-width:520px;margin:0 auto;}
+.page{display:none;}.page.active{display:block;}
+
+/* APP BAR */
+.appbar{position:sticky;top:0;z-index:50;background:var(--pri);color:#fff;padding-top:calc(10px + env(safe-area-inset-top,0));box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.appbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;max-width:520px;margin:0 auto;padding:0 14px 10px;}
+.appbar-title{font-size:17px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.appbar button{background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.appbar button:active{background:rgba(255,255,255,.3);}
+.datebar{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 14px 12px;background:var(--pri);max-width:520px;margin:0 auto;}
+.datebar button{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.datebar input[type=date]{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:20px;padding:7px 14px;font-size:14px;font-family:inherit;font-weight:500;text-align:center;color-scheme:dark;}
+.datebar .today-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;}
+.weekday-line{text-align:center;color:rgba(255,255,255,.85);font-size:12.5px;padding-bottom:10px;text-transform:capitalize;background:var(--pri);max-width:520px;margin:0 auto;}
+
+.content{padding:14px;}
+
+/* SUMMARY */
+.summary{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);padding:14px;margin-bottom:14px;}
+.summary-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx2);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.kpi{text-align:center;padding:10px 4px;border-radius:var(--r);background:var(--bg);}
+.kpi .num{font-size:22px;font-weight:700;line-height:1.1;}
+.kpi .lbl{font-size:10px;color:var(--tx2);margin-top:2px;text-transform:uppercase;letter-spacing:.3px;}
+.kpi.k-ok .num{color:var(--ok-tx);}
+.kpi.k-err .num{color:var(--err-tx);}
+.kpi.k-wrn .num{color:var(--wrn-tx);}
+.sum-centros{display:flex;flex-direction:column;gap:5px;}
+.sum-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+.sum-row .sname{flex:1;color:var(--tx2);text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sum-row .bar{flex:2;height:6px;background:var(--bg);border-radius:3px;overflow:hidden;display:flex;}
+.sum-row .bar .f-ok{background:var(--ok-tx);height:100%;}
+.sum-row .bar .f-err{background:var(--err-tx);height:100%;}
+.sum-row .cnt{font-size:11px;color:var(--tx3);min-width:34px;text-align:right;}
+
+/* ALERT BAR */
+.alert-bar{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--rl);margin-bottom:14px;background:var(--err-bg);border:1px solid var(--err-bd);box-shadow:var(--shadow);}
+.alert-bar .msg{flex:1;font-size:13px;font-weight:500;color:var(--err-tx);}
+.alert-bar button{font-size:13px;white-space:nowrap;background:var(--err-tx);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-weight:500;display:flex;align-items:center;gap:5px;font-family:inherit;cursor:pointer;}
+
+/* CFG */
+.cfg-card{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);padding:16px;margin-bottom:14px;}
+.cfg-title{font-weight:600;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.fld{margin-bottom:10px;}
+.fld label{display:block;font-size:11px;color:var(--tx2);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.fld input,.fld select{width:100%;font-family:inherit;font-size:15px;padding:11px 12px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);}
+.fld input:focus{outline:none;border-color:var(--pri);}
+.btn-pri{width:100%;background:var(--pri);color:#fff;border:none;border-radius:var(--r);padding:12px;font-size:14px;font-weight:500;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;}
+.btn-pri:active{background:var(--pri-dk);}
+.btn-sec{width:100%;background:var(--bg);color:var(--tx);border:1.5px solid var(--bd);border-radius:var(--r);padding:11px;font-size:14px;font-weight:500;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;}
+
+/* SECTIONS */
+.sec{margin-bottom:12px;}
+.sec-hdr{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);cursor:pointer;user-select:none;}
+.sec-hdr .dot{width:8px;height:8px;border-radius:50%;background:var(--tx3);flex-shrink:0;}
+.sec-hdr .dot.d-ok{background:var(--ok-tx);}
+.sec-hdr .dot.d-err{background:var(--err-tx);}
+.sec-hdr .name{flex:1;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.6px;}
+.sec-hdr .cnt{font-size:11px;color:var(--tx2);background:var(--bg);padding:3px 10px;border-radius:20px;font-weight:500;}
+.sec-hdr i{font-size:17px;color:var(--tx2);}
+.sec-body{padding:8px 0 2px;}
+
+/* MACHINE CARDS */
+.mc{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);padding:14px;margin-bottom:10px;border-left:4px solid transparent;position:relative;}
+.mc.s-alert{border-left-color:var(--err-tx);}
+.mc.s-warn{border-left-color:var(--wrn-tx);}
+.mc.s-ok{border-left-color:var(--ok-tx);}
+.mc-top{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.mc-id-input{width:90px;font-family:'Roboto Mono',monospace;font-weight:700;font-size:14px;padding:7px 8px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);text-align:center;}
+.mc-id-input:focus{outline:none;border-color:var(--pri);}
+.badges{display:flex;gap:4px;flex-wrap:wrap;align-items:center;flex:1;}
+.bg{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap;}
+.bg-ok{background:var(--ok-bg);color:var(--ok-tx);}
+.bg-err{background:var(--err-bg);color:var(--err-tx);}
+.bg-wrn{background:var(--wrn-bg);color:var(--wrn-tx);}
+.bg-sent{background:var(--info-bg);color:var(--info-tx);}
+.mc-del{width:34px;height:34px;padding:0;border:none;background:transparent;color:var(--tx3);font-size:17px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;flex-shrink:0;}
+.mc .fld input{padding:10px 12px;}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.add-row{width:100%;border:1.5px dashed var(--bd);background:transparent;font-size:13px;padding:10px;color:var(--tx2);border-radius:var(--r);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;}
+
+/* AUTOCOMPLETE */
+.ac-wrap{position:relative;}
+.ac-list{position:absolute;left:0;right:0;top:100%;background:var(--card);border:1.5px solid var(--pri);border-top:none;border-radius:0 0 var(--r) var(--r);z-index:100;max-height:200px;overflow-y:auto;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+.ac-item{padding:10px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--bd);}
+.ac-item:last-child{border-bottom:none;}
+.ac-item:active,.ac-item:hover{background:var(--pri-lt);}
+.ac-item .ac-code{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--tx2);display:block;}
+.ac-item .ac-desc{color:var(--tx);font-weight:500;}
+
+/* PRODUTOS PAGE */
+.prod-search{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.prod-search input{flex:1;font-family:inherit;font-size:15px;padding:11px 12px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--card);color:var(--tx);}
+.prod-search input:focus{outline:none;border-color:var(--pri);}
+.prod-list{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);overflow:hidden;margin-bottom:12px;}
+.prod-item{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bd);gap:10px;}
+.prod-item:last-child{border-bottom:none;}
+.prod-info{flex:1;min-width:0;}
+.prod-code{font-family:'Roboto Mono',monospace;font-size:12px;color:var(--tx2);font-weight:600;}
+.prod-desc{font-size:13px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prod-del{width:32px;height:32px;border:none;background:transparent;color:var(--tx3);font-size:16px;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;flex-shrink:0;}
+.prod-empty{text-align:center;padding:32px 16px;color:var(--tx3);font-size:13px;}
+.import-bar{background:var(--info-bg);border:1px solid var(--bd);border-radius:var(--rl);padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:8px;}
+.import-bar .ib-title{font-size:13px;font-weight:600;color:var(--info-tx);display:flex;align-items:center;gap:6px;}
+.import-bar .ib-sub{font-size:12px;color:var(--tx2);}
+
+/* MÁQUINAS PAGE */
+.maq-card{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;}
+.maq-hdr{display:flex;align-items:center;gap:8px;padding:13px 14px;}
+.maq-hdr .maq-name{flex:1;font-weight:600;font-size:14px;text-transform:capitalize;}
+.maq-hdr .maq-cnt{font-size:11px;color:var(--tx2);background:var(--bg);padding:3px 9px;border-radius:20px;}
+.maq-hdr button{width:32px;height:32px;padding:0;border:none;background:transparent;color:var(--tx3);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.maq-body{padding:0 14px 12px;}
+.maq-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.maq-chip{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--bd);border-radius:20px;padding:6px 6px 6px 12px;font-size:12.5px;font-family:'Roboto Mono',monospace;font-weight:600;}
+.maq-chip button{width:20px;height:20px;padding:0;border:none;background:transparent;color:var(--tx3);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;}
+.maq-add{display:flex;gap:6px;}
+.maq-add input{flex:1;font-family:'Roboto Mono',monospace;font-size:14px;padding:9px 10px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);}
+.maq-add button{background:var(--pri);color:#fff;border:none;border-radius:var(--r);padding:0 16px;font-size:13px;font-weight:500;cursor:pointer;}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;}
+.modal{background:var(--card);border-radius:var(--rl) var(--rl) 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0));width:100%;max-width:520px;}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--card);border-top:1px solid var(--bd);display:flex;justify-content:space-around;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0));box-shadow:0 -2px 12px rgba(0,0,0,.08);}
+.bottom-nav button{flex:1;max-width:100px;background:transparent;border:none;color:var(--tx2);font-family:inherit;font-size:10px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:var(--r);cursor:pointer;}
+.bottom-nav button i{font-size:21px;}
+.bottom-nav button.active{color:var(--pri);}
+.bottom-nav button:active{background:var(--bg);}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0));left:50%;transform:translateX(-50%);background:var(--tx);color:var(--card);font-size:13px;padding:10px 20px;border-radius:24px;box-shadow:0 4px 16px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis;z-index:300;}
+.toast.show{opacity:1;}
+
+/* HISTÓRICO */
+.hist-picker{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);padding:14px;margin-bottom:14px;}
+.hist-picker label{display:block;font-size:11px;color:var(--tx2);margin-bottom:6px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.hist-picker select{width:100%;font-family:inherit;font-size:15px;padding:11px 12px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);}
+.hist-summary{display:flex;gap:8px;margin-top:12px;}
+.hist-summary .hchip{flex:1;text-align:center;padding:8px 4px;border-radius:var(--r);background:var(--bg);}
+.hist-summary .hchip .num{font-size:18px;font-weight:700;line-height:1.1;}
+.hist-summary .hchip .lbl{font-size:9.5px;color:var(--tx2);text-transform:uppercase;letter-spacing:.3px;margin-top:2px;}
+.hist-summary .hchip.h-ok .num{color:var(--ok-tx);}
+.hist-summary .hchip.h-err .num{color:var(--err-tx);}
+.hist-summary .hchip.h-wrn .num{color:var(--wrn-tx);}
+.hist-item{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;border-left:4px solid transparent;}
+.hist-item.s-alert{border-left-color:var(--err-tx);}
+.hist-item.s-warn{border-left-color:var(--wrn-tx);}
+.hist-item.s-ok{border-left-color:var(--ok-tx);}
+.hist-item .hi-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.hist-item .hi-date{font-weight:600;font-size:13px;flex:1;text-transform:capitalize;}
+.hist-item .hi-sec{font-size:10.5px;color:var(--tx2);background:var(--bg);padding:3px 9px;border-radius:20px;}
+.hist-item .hi-row{font-size:12.5px;color:var(--tx2);display:flex;gap:6px;flex-wrap:wrap;}
+.hist-item .hi-row b{color:var(--tx);font-weight:600;}
+.hist-empty{text-align:center;padding:32px 16px;color:var(--tx3);font-size:13px;}
+
+/* REUNIÃO */
+.reu-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
+.reu-sec-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--tx2);margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
+.act-card{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);padding:14px;margin-bottom:10px;border-left:4px solid transparent;}
+.act-card.s-alert{border-left-color:var(--err-tx);}
+.act-card.s-warn{border-left-color:var(--wrn-tx);}
+.act-card.s-done{border-left-color:var(--ok-tx);opacity:.7;}
+.act-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.act-top .at-id{font-family:'Roboto Mono',monospace;font-weight:700;font-size:13px;}
+.act-top .at-sec{font-size:10.5px;color:var(--tx2);background:var(--bg);padding:3px 9px;border-radius:20px;flex:1;}
+.act-top .at-badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;}
+.act-problem{font-size:12.5px;color:var(--tx2);margin-bottom:10px;}
+.act-problem b{color:var(--tx);}
+.act-fld{margin-bottom:8px;}
+.act-fld label{display:block;font-size:10.5px;color:var(--tx2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
+.act-fld input,.act-fld textarea{width:100%;font-family:inherit;font-size:14px;padding:9px 10px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);box-sizing:border-box;}
+.act-fld textarea{resize:vertical;min-height:44px;}
+.act-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.act-done-row{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.act-done-row label{font-size:12.5px;color:var(--tx2);display:flex;align-items:center;gap:6px;cursor:pointer;}
+.act-done-row input[type=checkbox]{width:18px;height:18px;}
+.ok-list{background:var(--card);border-radius:var(--rl);box-shadow:var(--shadow);padding:12px 14px;margin-bottom:10px;}
+.ok-list .ok-title{font-size:11.5px;color:var(--tx2);margin-bottom:6px;font-weight:600;}
+.ok-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.ok-chips span{font-size:11px;background:var(--ok-bg);color:var(--ok-tx);padding:3px 9px;border-radius:20px;font-weight:600;font-family:'Roboto Mono',monospace;}
+.reu-empty{text-align:center;padding:24px 16px;color:var(--tx3);font-size:13px;}
+
+/* PRINT */
+#printSheet{display:none;}
+@media print{
+  body>.app,.bottom-nav,.toast{display:none!important;}
+  body{padding:0;background:#fff;margin:0;}
+  html,body{width:100%;height:100%;}
+  #printSheet{display:block!important;font-family:Arial,sans-serif;color:#000;width:100%;}
+  @page{size:A4 landscape;margin:5mm;}
+  .ps-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2.5mm;}
+  .ps-day{font-size:18pt;font-weight:bold;text-transform:capitalize;}
+  .ps-date{font-size:12pt;}
+  table.ps{width:100%;border-collapse:collapse;table-layout:fixed;}
+  table.ps th,table.ps td{border:0.6pt solid #444;padding:2px 5px;font-size:8.5pt;vertical-align:middle;overflow:hidden;}
+  table.ps th{background:#3f3f3f!important;color:#fff!important;font-size:7.5pt;text-transform:uppercase;-webkit-print-color-adjust:exact;print-color-adjust:exact;padding:4px;}
+  table.ps td.centro{background:#5f5f5f!important;color:#fff!important;font-size:6pt;text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font-weight:bold;-webkit-print-color-adjust:exact;print-color-adjust:exact;width:14px;padding:2px;letter-spacing:0;overflow:visible;}
+  table.ps td.mid{font-size:8pt;font-weight:bold;background:#e8e8e8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;text-align:center;width:40px;}
+  table.ps tr.sec-first td{border-top:1.6pt solid #000!important;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- APP BAR -->
+  <div class="appbar" id="mainAppbar">
+    <div class="appbar-row">
+      <span class="appbar-title" id="appbarTitle">Quadro Produção CNC</span>
+      <button id="cfgBtn" aria-label="Configurações"><i class="ti ti-settings"></i></button>
+    </div>
+    <div class="datebar" id="datebarEl">
+      <button id="prev" aria-label="anterior"><i class="ti ti-chevron-left"></i></button>
+      <input type="date" id="dateIn" />
+      <button id="next" aria-label="próximo"><i class="ti ti-chevron-right"></i></button>
+      <button class="today-btn" id="todayBtn">hoje</button>
+    </div>
+    <div class="weekday-line" id="weekday"></div>
+  </div>
+
+  <!-- PAGE: QUADRO -->
+  <div class="page active" id="pageQuadro">
+    <div class="content">
+      <div class="cfg-card" id="cfgPanel" style="display:none;">
+        <div class="cfg-title"><i class="ti ti-settings" style="font-size:17px;"></i> configurações</div>
+        <div class="fld"><label>e-mail destino dos alertas</label><input type="email" id="cfgEmail" placeholder="setor@empresa.com" /></div>
+        <div class="fld"><label>assunto base</label><input type="text" id="cfgSubject" placeholder="Alerta Quadro Produção CNC" /></div>
+        <button class="btn-pri" id="cfgSave"><i class="ti ti-check"></i>salvar configurações</button>
+      </div>
+      <div class="summary" id="summary"></div>
+      <div id="alertBar" class="alert-bar" style="display:none;">
+        <i class="ti ti-alert-triangle" style="font-size:22px;color:var(--err-tx);"></i>
+        <span class="msg" id="alertMsg"></span>
+        <button id="alertSend"><i class="ti ti-mail"></i>notificar</button>
+      </div>
+      <div id="sections"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: MÁQUINAS -->
+  <div class="page" id="pageMaquinas">
+    <div class="content">
+      <div class="import-bar" style="background:var(--pri-lt);">
+        <div class="ib-title" style="color:var(--pri-dk);"><i class="ti ti-info-circle" style="font-size:16px;"></i>centros e máquinas cadastrados aqui aparecem todo dia, automaticamente</div>
+      </div>
+      <div id="maqList"></div>
+      <div class="cfg-card">
+        <div class="cfg-title"><i class="ti ti-folder-plus" style="font-size:17px;"></i> novo centro / setor</div>
+        <div class="fld"><label>nome do centro</label><input type="text" id="novoCentroNome" placeholder="ex: polimento" /></div>
+        <button class="btn-pri" id="novoCentroBtn"><i class="ti ti-plus"></i>criar centro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: HISTÓRICO -->
+  <div class="page" id="pageHistorico">
+    <div class="content">
+      <div class="hist-picker">
+        <label>máquina</label>
+        <select id="histSelect"></select>
+        <div class="hist-summary" id="histSummary" style="display:none;">
+          <div class="hchip h-ok"><div class="num" id="histNumOk">0</div><div class="lbl">ok</div></div>
+          <div class="hchip h-err"><div class="num" id="histNumErr">0</div><div class="lbl">parada</div></div>
+          <div class="hchip h-wrn"><div class="num" id="histNumWrn">0</div><div class="lbl">desvio</div></div>
+        </div>
+      </div>
+      <div id="histList"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: REUNIÃO -->
+  <div class="page" id="pageReuniao">
+    <div class="content">
+      <div class="reu-kpis" id="reuKpis"></div>
+      <div id="reuContent"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: PRODUTOS -->
+  <div class="page" id="pageProdutos">
+    <div class="content">
+      <div class="import-bar">
+        <div class="ib-title"><i class="ti ti-file-import" style="font-size:16px;"></i>importar do Excel/CSV</div>
+        <div class="ib-sub">Coluna A = Código &nbsp;|&nbsp; Coluna B = Descrição</div>
+        <button class="btn-pri" id="importProdBtn" style="margin-top:4px;"><i class="ti ti-upload"></i>selecionar arquivo</button>
+        <button class="btn-sec" id="downloadModeloBtn"><i class="ti ti-download"></i>baixar modelo Excel</button>
+        <input type="file" id="prodFileIn" accept=".xlsx,.xls,.csv" style="display:none;" />
+      </div>
+      <div class="prod-search">
+        <input type="text" id="prodSearch" placeholder="buscar produto..." />
+      </div>
+      <div id="prodList"></div>
+      <button class="btn-pri" id="addProdBtn" style="margin-top:4px;"><i class="ti ti-plus"></i>adicionar produto</button>
+    </div>
+  </div>
+
+  <!-- PAGE: EXPORTAR -->
+  <div class="page" id="pageExportar">
+    <div class="content">
+      <div class="cfg-card">
+        <div class="cfg-title"><i class="ti ti-file-spreadsheet" style="font-size:17px;"></i> planilha de produção</div>
+        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Cada dia vira uma aba na mesma planilha. Primeira vez: crie nova. Depois: abra a existente pra atualizar.</p>
+        <button class="btn-pri" id="xlsxNovo" style="margin-bottom:10px;"><i class="ti ti-file-plus"></i>criar planilha nova</button>
+        <button class="btn-sec" id="xlsxExistente"><i class="ti ti-folder-open"></i>abrir e atualizar existente</button>
+        <input type="file" id="fileIn" accept=".xlsx" style="display:none;" />
+      </div>
+      <div class="cfg-card">
+        <div class="cfg-title"><i class="ti ti-printer" style="font-size:17px;"></i> folha de impressão</div>
+        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Gera a folha no formato do quadro físico — A4 paisagem — pronta pra imprimir e colocar no acrílico.</p>
+        <div class="fld">
+          <label>altura da linha (px) — <span id="rowHVal">19</span>px</label>
+          <input type="range" id="rowHSlider" min="12" max="40" step="1" value="19" style="padding:0;" />
+        </div>
+        <button class="btn-pri" id="printBtn"><i class="ti ti-printer"></i>imprimir / salvar PDF</button>
+      </div>
+      <div class="cfg-card">
+        <div class="cfg-title"><i class="ti ti-share" style="font-size:17px;"></i> compartilhar resumo</div>
+        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Envia o resumo do dia por WhatsApp, e-mail ou qualquer outro app.</p>
+        <button class="btn-pri" id="shareBtn"><i class="ti ti-share"></i>compartilhar</button>
+      </div>
+      <div class="cfg-card">
+        <div class="cfg-title"><i class="ti ti-brand-google" style="font-size:17px;"></i> planilha online (Google Sheets)</div>
+        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Envia a ronda + as decisões da reunião do dia direto pra uma planilha no Google Sheets. Precisa de um Client ID (Google Cloud) e do app hospedado num endereço https — enquanto isso não estiver pronto, essa parte fica desativada e o resto do app continua funcionando normal.</p>
+        <div class="fld"><label>Client ID (Google Cloud)</label><input type="text" id="gsClientId" placeholder="xxxx.apps.googleusercontent.com" /></div>
+        <div class="fld"><label>ID da planilha</label><input type="text" id="gsSheetId" placeholder="cole o ID que aparece na URL da planilha" /></div>
+        <div class="fld"><label>nome da aba</label><input type="text" id="gsTabName" placeholder="Histórico" /></div>
+        <button class="btn-sec" id="gsSaveCfg" style="margin-bottom:10px;"><i class="ti ti-check"></i>salvar configuração</button>
+        <button class="btn-pri" id="gsConnectBtn" style="margin-bottom:10px;"><i class="ti ti-brand-google"></i>conectar com Google</button>
+        <button class="btn-sec" id="gsHeaderBtn" style="margin-bottom:10px;"><i class="ti ti-table"></i>criar cabeçalho na planilha</button>
+        <button class="btn-pri" id="gsSendBtn" style="display:none;"><i class="ti ti-cloud-upload"></i>enviar dia atual pro Google Sheets</button>
+        <div id="gsStatus" style="font-size:12px;color:var(--tx2);margin-top:10px;"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button id="navQuadro" class="active"><i class="ti ti-layout-board"></i>Quadro</button>
+  <button id="navMaquinas"><i class="ti ti-settings-automation"></i>Máquinas</button>
+  <button id="navHistorico"><i class="ti ti-history"></i>Histórico</button>
+  <button id="navReuniao"><i class="ti ti-users"></i>Reunião</button>
+  <button id="navProdutos"><i class="ti ti-package"></i>Produtos</button>
+  <button id="navExportar"><i class="ti ti-share-3"></i>Exportar</button>
+</div>
+
+<!-- MODAL add/edit produto -->
+<div class="modal-overlay" id="modalOverlay" style="display:none;">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Novo Produto</div>
+    <div class="fld"><label>código</label><input type="text" id="modalCod" placeholder="ex: 101.30006" /></div>
+    <div class="fld"><label>descrição</label><input type="text" id="modalDesc" placeholder="ex: Tiplan 2.0x6" /></div>
+    <button class="btn-pri" id="modalSave" style="margin-bottom:10px;"><i class="ti ti-check"></i>salvar</button>
+    <button class="btn-sec" id="modalCancel">cancelar</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="printSheet"></div>
+
+<script>
+(function(){
+"use strict";
+
+var DEFS=[
+  {name:"centro de torneamento",machines:["M-249","M-230","M-160","M-231","M-161"]},
+  {name:"centro de usinagem",machines:["M-124","M-151","M-140","M-168","M-136"]},
+  {name:"bancada",machines:["",""]},
+  {name:"torno",machines:["",""]},
+  {name:"fresadora",machines:["",""]},
+  {name:"laser",machines:["M-212"]},
+  {name:"água",machines:["M-147"]},
+  {name:"gl",machines:["M-146"]}
+];
+
+function emptyM(id){return{id:id||"",codigo:"",descricao:"",status:"",potenciometro:"",tempoOF:"",tempoMaquina:"",tempoTroca:"",sent:false};}
+function pad(n){return n.toString().padStart(2,"0");}
+function dk(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function fd(k){var p=k.split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+var WD=["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+function esc(s){var d=document.createElement("div");d.textContent=s||"";return d.innerHTML;}
+
+// -------- STATE --------
+var dateIn=document.getElementById("dateIn");
+var today=new Date(); dateIn.value=dk(today);
+var dayData=null, cfg={email:"",subject:"Alerta Quadro Produção CNC"}, collapsed={}, saveTimer=null;
+var produtos={}; // {codigo: descricao}
+var editingProdCod=null; // for modal edit
+
+// -------- TOAST --------
+var toastEl=document.getElementById("toast"),toastT=null;
+function msg(t){toastEl.textContent=t;toastEl.classList.add("show");clearTimeout(toastT);toastT=setTimeout(function(){toastEl.classList.remove("show");},2600);}
+
+// -------- NAVIGATION --------
+var pages={quadro:"pageQuadro",maquinas:"pageMaquinas",historico:"pageHistorico",reuniao:"pageReuniao",produtos:"pageProdutos",exportar:"pageExportar"};
+var navBtns={quadro:"navQuadro",maquinas:"navMaquinas",historico:"navHistorico",reuniao:"navReuniao",produtos:"navProdutos",exportar:"navExportar"};
+var datebarEl=document.getElementById("datebarEl");
+var weekdayEl=document.getElementById("weekday");
+var appbarTitle=document.getElementById("appbarTitle");
+
+function goPage(p){
+  Object.keys(pages).forEach(function(k){
+    document.getElementById(pages[k]).classList.toggle("active",k===p);
+    document.getElementById(navBtns[k]).classList.toggle("active",k===p);
+  });
+  var isQuadro=p==="quadro";
+  datebarEl.style.display=isQuadro?"flex":"none";
+  weekdayEl.style.display=isQuadro?"block":"none";
+  var titles={quadro:"Quadro Produção CNC",maquinas:"Centros e Máquinas",historico:"Histórico por Máquina",reuniao:"Painel de Reunião",produtos:"Cadastro de Produtos",exportar:"Exportar / Imprimir"};
+  appbarTitle.textContent=titles[p];
+  if(p==="produtos") renderProdutos();
+  if(p==="maquinas") renderMaquinas();
+  if(p==="historico") renderHistorico();
+  if(p==="reuniao") renderReuniao();
+}
+
+document.getElementById("navQuadro").addEventListener("click",function(){goPage("quadro");});
+document.getElementById("navMaquinas").addEventListener("click",function(){goPage("maquinas");});
+document.getElementById("navHistorico").addEventListener("click",function(){goPage("historico");});
+document.getElementById("navReuniao").addEventListener("click",function(){goPage("reuniao");});
+document.getElementById("navProdutos").addEventListener("click",function(){goPage("produtos");});
+document.getElementById("navExportar").addEventListener("click",function(){goPage("exportar");});
+
+// -------- CFG --------
+function loadCfg(){
+  try{var s=localStorage.getItem("qcnc_cfg");if(s)cfg=JSON.parse(s);}catch(e){}
+  document.getElementById("cfgEmail").value=cfg.email||"";
+  document.getElementById("cfgSubject").value=cfg.subject||"";
+}
+function saveCfg(){
+  cfg.email=document.getElementById("cfgEmail").value.trim();
+  cfg.subject=document.getElementById("cfgSubject").value.trim();
+  try{localStorage.setItem("qcnc_cfg",JSON.stringify(cfg));msg("configurações salvas");}catch(e){msg("erro ao salvar");}
+  document.getElementById("cfgPanel").style.display="none";
+}
+document.getElementById("cfgBtn").addEventListener("click",function(){
+  var p=document.getElementById("cfgPanel");
+  p.style.display=p.style.display==="none"?"block":"none";
+});
+document.getElementById("cfgSave").addEventListener("click",saveCfg);
+
+// -------- PRODUTOS --------
+function loadProdutos(){
+  try{var s=localStorage.getItem("qcnc_produtos");if(s)produtos=JSON.parse(s);}catch(e){}
+}
+function saveProdutos(){
+  try{localStorage.setItem("qcnc_produtos",JSON.stringify(produtos));}catch(e){msg("erro ao salvar produtos");}
+}
+function lookupDesc(codigo){
+  if(!codigo) return "";
+  var c=codigo.trim();
+  return produtos[c]||produtos[c.toLowerCase()]||"";
+}
+
+function renderProdutos(){
+  var query=(document.getElementById("prodSearch").value||"").trim().toLowerCase();
+  var keys=Object.keys(produtos).sort();
+  if(query) keys=keys.filter(function(k){return k.toLowerCase().includes(query)||((produtos[k]||"").toLowerCase().includes(query));});
+  var el=document.getElementById("prodList");
+  if(keys.length===0){
+    el.innerHTML='<div class="prod-empty"><i class="ti ti-package" style="font-size:32px;display:block;margin-bottom:8px;"></i>'+(query?"nenhum produto encontrado":"nenhum produto cadastrado ainda")+'</div>';
+    return;
+  }
+  var html='<div class="prod-list">';
+  keys.forEach(function(k){
+    html+='<div class="prod-item">'+
+      '<div class="prod-info"><div class="prod-code">'+esc(k)+'</div><div class="prod-desc">'+esc(produtos[k])+'</div></div>'+
+      '<button class="prod-del" data-edit="'+esc(k)+'" aria-label="editar" style="color:var(--tx2);margin-right:2px;"><i class="ti ti-edit"></i></button>'+
+      '<button class="prod-del" data-del="'+esc(k)+'" aria-label="remover"><i class="ti ti-trash"></i></button>'+
+    '</div>';
+  });
+  html+='</div>';
+  el.innerHTML=html;
+  el.querySelectorAll("[data-del]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var k=b.getAttribute("data-del");
+      if(confirm("Remover produto "+k+"?")){ delete produtos[k]; saveProdutos(); renderProdutos(); }
+    });
+  });
+  el.querySelectorAll("[data-edit]").forEach(function(b){
+    b.addEventListener("click",function(){
+      openModal(b.getAttribute("data-edit"));
+    });
+  });
+}
+
+document.getElementById("prodSearch").addEventListener("input",renderProdutos);
+
+// IMPORT
+document.getElementById("importProdBtn").addEventListener("click",function(){document.getElementById("prodFileIn").click();});
+document.getElementById("prodFileIn").addEventListener("change",function(e){
+  var file=e.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      var wb=XLSX.read(ev.target.result,{type:"array"});
+      var ws=wb.Sheets[wb.SheetNames[0]];
+      var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:""});
+      var count=0;
+      rows.forEach(function(r){
+        var cod=(r[0]||"").toString().trim();
+        var desc=(r[1]||"").toString().trim();
+        if(cod && desc && cod.toLowerCase()!=="código" && cod.toLowerCase()!="codigo" && cod.toLowerCase()!="code"){
+          produtos[cod]=desc; count++;
+        }
+      });
+      saveProdutos(); renderProdutos();
+      msg(count+" produtos importados");
+    }catch(err){msg("erro ao ler arquivo: "+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value="";
+});
+
+// MODELO EXCEL
+document.getElementById("downloadModeloBtn").addEventListener("click",function(){
+  var wb=XLSX.utils.book_new();
+  var dados=[["Código","Descrição"],["101.30006","Tiplan 2.0x6"],["201.000801","Tubo Haste Âncora"],["303.91506","Speed 3.5x6"]];
+  var ws=XLSX.utils.aoa_to_sheet(dados);
+  ws["!cols"]=[{wch:18},{wch:40}];
+  var hStyle={font:{bold:true,color:{rgb:"FFFFFF"},sz:12},fill:{patternType:"solid",fgColor:{rgb:"0F766E"}},alignment:{horizontal:"center"}};
+  ["A1","B1"].forEach(function(a){if(ws[a])ws[a].s=hStyle;});
+  XLSX.utils.book_append_sheet(wb,ws,"Produtos");
+  var out=XLSX.write(wb,{bookType:"xlsx",type:"array",cellStyles:true});
+  var blob=new Blob([out],{type:"application/octet-stream"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download="modelo_produtos.xlsx";
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  msg("modelo baixado");
+});
+
+// MODAL add/edit
+function openModal(editCod){
+  editingProdCod=editCod||null;
+  document.getElementById("modalTitle").textContent=editCod?"Editar Produto":"Novo Produto";
+  document.getElementById("modalCod").value=editCod||"";
+  document.getElementById("modalCod").disabled=!!editCod;
+  document.getElementById("modalDesc").value=editCod?(produtos[editCod]||""):"";
+  document.getElementById("modalOverlay").style.display="flex";
+  setTimeout(function(){document.getElementById(editCod?"modalDesc":"modalCod").focus();},100);
+}
+function closeModal(){document.getElementById("modalOverlay").style.display="none"; editingProdCod=null;}
+document.getElementById("addProdBtn").addEventListener("click",function(){openModal(null);});
+document.getElementById("modalCancel").addEventListener("click",closeModal);
+document.getElementById("modalOverlay").addEventListener("click",function(e){if(e.target===this)closeModal();});
+document.getElementById("modalSave").addEventListener("click",function(){
+  var cod=document.getElementById("modalCod").value.trim();
+  var desc=document.getElementById("modalDesc").value.trim();
+  if(!cod||!desc){msg("preencha código e descrição");return;}
+  if(editingProdCod) delete produtos[editingProdCod];
+  produtos[cod]=desc;
+  saveProdutos(); renderProdutos(); closeModal();
+  msg(editingProdCod?"produto atualizado":"produto adicionado");
+});
+
+// -------- AUTOCOMPLETE --------
+function buildAC(inp, descInp){
+  var list=null;
+  function hide(){if(list){list.remove();list=null;}}
+  function show(items){
+    hide();
+    if(!items.length) return;
+    list=document.createElement("div"); list.className="ac-list";
+    items.slice(0,8).forEach(function(item){
+      var d=document.createElement("div"); d.className="ac-item";
+      d.innerHTML='<span class="ac-code">'+esc(item.cod)+'</span><span class="ac-desc">'+esc(item.desc)+'</span>';
+      d.addEventListener("mousedown",function(e){e.preventDefault();});
+      d.addEventListener("click",function(){
+        inp.value=item.cod; descInp.value=item.desc;
+        inp.dispatchEvent(new Event("change")); descInp.dispatchEvent(new Event("change"));
+        hide();
+      });
+      list.appendChild(d);
+    });
+    inp.parentNode.appendChild(list);
+  }
+  inp.addEventListener("input",function(){
+    var q=inp.value.trim().toLowerCase();
+    if(!q){hide();return;}
+    var results=Object.keys(produtos).filter(function(k){
+      return k.toLowerCase().includes(q)||(produtos[k]||"").toLowerCase().includes(q);
+    }).map(function(k){return{cod:k,desc:produtos[k]};});
+    if(results.length) show(results); else hide();
+  });
+  inp.addEventListener("blur",function(){setTimeout(hide,150);});
+}
+
+// -------- LAYOUT (centros/máquinas permanentes) --------
+var layout=null;
+function loadLayout(){
+  try{
+    var s=localStorage.getItem("qcnc_layout");
+    layout = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFS));
+  }catch(e){ layout=JSON.parse(JSON.stringify(DEFS)); }
+  if(!Array.isArray(layout)||layout.length===0) layout=JSON.parse(JSON.stringify(DEFS));
+}
+function saveLayout(){
+  try{ localStorage.setItem("qcnc_layout",JSON.stringify(layout)); }catch(e){ msg("erro ao salvar"); }
+}
+
+function renderMaquinas(){
+  var el=document.getElementById("maqList");
+  el.innerHTML="";
+  layout.forEach(function(sec,si){
+    var card=document.createElement("div"); card.className="maq-card";
+    var hdr=document.createElement("div"); hdr.className="maq-hdr";
+    var nm=document.createElement("span"); nm.className="maq-name"; nm.textContent=sec.name;
+    var real=sec.machines.filter(function(m){return m && m.trim();});
+    var cnt=document.createElement("span"); cnt.className="maq-cnt"; cnt.textContent=real.length+" máquina"+(real.length!==1?"s":"");
+    var delSec=document.createElement("button"); delSec.setAttribute("aria-label","remover centro");
+    delSec.innerHTML='<i class="ti ti-trash"></i>';
+    delSec.addEventListener("click",function(){
+      if(confirm('Remover o centro "'+sec.name+'" e todas suas máquinas cadastradas? (dias já lançados não são afetados)')){
+        layout.splice(si,1); saveLayout(); renderMaquinas();
+      }
+    });
+    hdr.appendChild(nm); hdr.appendChild(cnt); hdr.appendChild(delSec);
+    card.appendChild(hdr);
+
+    var body=document.createElement("div"); body.className="maq-body";
+    var chips=document.createElement("div"); chips.className="maq-chips";
+    real.forEach(function(mid){
+      var chip=document.createElement("span"); chip.className="maq-chip";
+      chip.innerHTML='<span>'+esc(mid)+'</span>';
+      var b=document.createElement("button"); b.innerHTML='<i class="ti ti-x"></i>'; b.setAttribute("aria-label","remover máquina");
+      b.addEventListener("click",function(){
+        sec.machines=sec.machines.filter(function(x){return x!==mid;});
+        saveLayout(); renderMaquinas();
+      });
+      chip.appendChild(b); chips.appendChild(chip);
+    });
+    body.appendChild(chips);
+
+    var addRow=document.createElement("div"); addRow.className="maq-add";
+    var inp=document.createElement("input"); inp.type="text"; inp.placeholder="ex: M-300";
+    var addBtn=document.createElement("button"); addBtn.textContent="adicionar";
+    function doAdd(){
+      var v=inp.value.trim();
+      if(!v){ return; }
+      if(sec.machines.indexOf(v)>=0){ msg("máquina já cadastrada nesse centro"); return; }
+      sec.machines=sec.machines.filter(function(x){return x&&x.trim();});
+      sec.machines.push(v);
+      saveLayout(); inp.value=""; renderMaquinas();
+    }
+    addBtn.addEventListener("click",doAdd);
+    inp.addEventListener("keydown",function(e){ if(e.key==="Enter"){ e.preventDefault(); doAdd(); } });
+    addRow.appendChild(inp); addRow.appendChild(addBtn);
+    body.appendChild(addRow);
+
+    card.appendChild(body);
+    el.appendChild(card);
+  });
+}
+
+document.getElementById("novoCentroBtn").addEventListener("click",function(){
+  var inp=document.getElementById("novoCentroNome");
+  var nome=inp.value.trim();
+  if(!nome){ msg("digite o nome do centro"); return; }
+  if(layout.some(function(s){return s.name.toLowerCase()===nome.toLowerCase();})){ msg("já existe um centro com esse nome"); return; }
+  layout.push({name:nome, machines:[]});
+  saveLayout(); inp.value=""; renderMaquinas();
+  msg("centro criado — adicione as máquinas dele acima");
+});
+
+// -------- DAY DATA --------
+function defaultData(){return layout.map(function(s){return{name:s.name,machines:(s.machines.filter(function(x){return x&&x.trim();}).length?s.machines.filter(function(x){return x&&x.trim();}):[""]).map(function(m){return emptyM(m);})};});}
+function loadDate(key){
+  var d=fd(key);
+  weekdayEl.textContent=WD[d.getDay()]+" — "+pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear();
+  try{var s=localStorage.getItem("qcnc_"+key);dayData=s?JSON.parse(s):defaultData();}catch(e){dayData=defaultData();}
+  render();
+}
+function schedSave(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(function(){try{localStorage.setItem("qcnc_"+dateIn.value,JSON.stringify(dayData));}catch(e){msg("erro ao salvar");}},400);
+}
+
+// -------- PARSE TIME --------
+function parseT(s){
+  if(!s) return null;
+  s=s.trim().replace(",",".");
+  var p=s.split(":");
+  if(p.length===2){var h=parseFloat(p[0]),m=parseFloat(p[1]);if(!isNaN(h)&&!isNaN(m))return h*60+m;}
+  var n=parseFloat(s);return isNaN(n)?null:n;
+}
+function devPct(of,mq){var a=parseT(of),b=parseT(mq);if(a===null||b===null||a===0)return null;return Math.round(Math.abs(b-a)/a*100);}
+function rowState(m){
+  var st=(m.status||"").trim().toLowerCase();
+  var dv=devPct(m.tempoOF,m.tempoMaquina);
+  if(st&&st!=="ok") return "err";
+  if(dv!==null&&dv>=20) return "warn";
+  if(st==="ok") return "ok";
+  return null;
+}
+function getAlerts(){
+  var out=[];
+  dayData.forEach(function(sec){sec.machines.forEach(function(m){
+    var st=(m.status||"").trim().toLowerCase();
+    if(st&&st!=="ok") out.push({type:"status",sec:sec.name,m:m});
+    var d=devPct(m.tempoOF,m.tempoMaquina);
+    if(d!==null&&d>=20) out.push({type:"tempo",sec:sec.name,m:m,dev:d});
+  });});
+  return out;
+}
+
+// -------- HISTÓRICO POR MÁQUINA --------
+function allMachineIds(){
+  var ids=[];
+  layout.forEach(function(sec){
+    sec.machines.forEach(function(mid){
+      mid=(mid||"").trim();
+      if(mid && ids.indexOf(mid)<0) ids.push(mid);
+    });
+  });
+  return ids.sort();
+}
+function scanHistoryFor(machineId){
+  var out=[];
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(!key||key.indexOf("qcnc_")!==0) continue;
+    var datePart=key.slice(5);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) continue; // ignora qcnc_cfg, qcnc_produtos, qcnc_layout, qcnc_rowh
+    var data;
+    try{data=JSON.parse(localStorage.getItem(key));}catch(e){continue;}
+    if(!Array.isArray(data)) continue;
+    data.forEach(function(sec){
+      (sec.machines||[]).forEach(function(m){
+        if((m.id||"").trim()===machineId && (m.status||m.codigo||m.tempoOF||m.tempoMaquina)){
+          out.push({date:datePart,secName:sec.name,m:m});
+        }
+      });
+    });
+  }
+  out.sort(function(a,b){return a.date<b.date?1:-1;}); // mais recente primeiro
+  return out;
+}
+function populateHistSelect(){
+  var sel=document.getElementById("histSelect");
+  var ids=allMachineIds();
+  var prev=sel.value;
+  sel.innerHTML="";
+  if(!ids.length){
+    var o=document.createElement("option"); o.textContent="nenhuma máquina cadastrada"; sel.appendChild(o);
+    return;
+  }
+  ids.forEach(function(id){
+    var o=document.createElement("option"); o.value=id; o.textContent=id;
+    sel.appendChild(o);
+  });
+  if(prev && ids.indexOf(prev)>=0) sel.value=prev;
+}
+function renderHistorico(){
+  populateHistSelect();
+  var sel=document.getElementById("histSelect");
+  var listEl=document.getElementById("histList");
+  var sumEl=document.getElementById("histSummary");
+  var mid=sel.value;
+  if(!mid){ listEl.innerHTML=""; sumEl.style.display="none"; return; }
+  var entries=scanHistoryFor(mid);
+  if(!entries.length){
+    listEl.innerHTML='<div class="hist-empty"><i class="ti ti-history" style="font-size:32px;display:block;margin-bottom:8px;"></i>nenhum registro encontrado ainda pra '+esc(mid)+'</div>';
+    sumEl.style.display="none";
+    return;
+  }
+  var nOk=0,nErr=0,nWrn=0;
+  var html="";
+  entries.forEach(function(e){
+    var st=rowState(e.m);
+    if(st==="ok") nOk++; else if(st==="err") nErr++; else if(st==="warn") nWrn++;
+    var cls=st==="err"?"s-alert":(st==="warn"?"s-warn":(st==="ok"?"s-ok":""));
+    var d=fd(e.date);
+    var dateLbl=WD[d.getDay()]+" — "+pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+d.getFullYear();
+    html+='<div class="hist-item '+cls+'">'+
+      '<div class="hi-top"><span class="hi-date">'+esc(dateLbl)+'</span><span class="hi-sec">'+esc(e.secName)+'</span></div>'+
+      '<div class="hi-row">'+
+      (e.m.codigo?'<span><b>'+esc(e.m.codigo)+'</b> '+esc(e.m.descricao||"")+'</span>':'')+
+      '</div>'+
+      '<div class="hi-row">'+
+      (e.m.status?'<span>status: <b>'+esc(e.m.status)+'</b></span>':'')+
+      (e.m.tempoOF||e.m.tempoMaquina?'<span>OF: <b>'+esc(e.m.tempoOF||"-")+'</b> · Máq: <b>'+esc(e.m.tempoMaquina||"-")+'</b></span>':'')+
+      '</div>'+
+    '</div>';
+  });
+  listEl.innerHTML=html;
+  sumEl.style.display="flex";
+  document.getElementById("histNumOk").textContent=nOk;
+  document.getElementById("histNumErr").textContent=nErr;
+  document.getElementById("histNumWrn").textContent=nWrn;
+}
+document.getElementById("histSelect").addEventListener("change",renderHistorico);
+
+// -------- PAINEL DE REUNIÃO --------
+function acoesKey(dateKey){return "qcnc_acoes_"+dateKey;}
+function loadAcoes(dateKey){
+  try{var s=localStorage.getItem(acoesKey(dateKey));return s?JSON.parse(s):{};}catch(e){return{};}
+}
+function saveAcoes(dateKey,obj){
+  try{localStorage.setItem(acoesKey(dateKey),JSON.stringify(obj));}catch(e){msg("erro ao salvar ação");}
+}
+function alertId(a){return a.sec+"||"+a.m.id;}
+
+function renderReuniao(){
+  var dateKey=dateIn.value;
+  var acoes=loadAcoes(dateKey);
+  var alerts=getAlerts();
+  // dedup alerts por máquina (status + tempo podem gerar 2 alerts pra mesma máquina)
+  var byMachine={};
+  alerts.forEach(function(a){
+    var id=alertId(a);
+    if(!byMachine[id]) byMachine[id]={sec:a.sec,m:a.m,reasons:[]};
+    if(a.type==="status") byMachine[id].reasons.push("status: "+a.m.status);
+    else byMachine[id].reasons.push("desvio de tempo: OF "+a.m.tempoOF+" / máquina "+a.m.tempoMaquina+" (Δ"+a.dev+"%)");
+  });
+  var problemIds=Object.keys(byMachine);
+
+  // totais do dia (todas as máquinas com algum dado lançado)
+  var totalConferidas=0,totalOk=0,okList=[];
+  dayData.forEach(function(sec){
+    sec.machines.forEach(function(m){
+      if(!(m.codigo||m.status||m.tempoOF||m.tempoMaquina)) return;
+      totalConferidas++;
+      if(rowState(m)==="ok"){ totalOk++; okList.push(m.id); }
+    });
+  });
+  var acoesDefinidas=Object.keys(acoes).filter(function(k){return acoes[k].acao;}).length;
+
+  var kpis=document.getElementById("reuKpis");
+  kpis.innerHTML=
+    '<div class="kpi"><div class="num">'+totalConferidas+'</div><div class="lbl">conferidas</div></div>'+
+    '<div class="kpi k-ok"><div class="num">'+totalOk+'</div><div class="lbl">ok</div></div>'+
+    '<div class="kpi k-err"><div class="num">'+problemIds.length+'</div><div class="lbl">problemas</div></div>'+
+    '<div class="kpi k-wrn"><div class="num">'+acoesDefinidas+'</div><div class="lbl">ações def.</div></div>';
+
+  var html="";
+  html+='<div class="reu-sec-title"><i class="ti ti-alert-triangle"></i>problemas do dia</div>';
+  if(!problemIds.length){
+    html+='<div class="reu-empty">nenhum problema registrado nessa data — tudo OK</div>';
+  } else {
+    problemIds.forEach(function(id){
+      var b=byMachine[id]; var st=rowState(b.m); var a=acoes[id]||{};
+      var cls=a.done?"s-done":(st==="err"?"s-alert":"s-warn");
+      html+='<div class="act-card '+cls+'" data-actid="'+esc(id)+'">'+
+        '<div class="act-top"><span class="at-id">'+esc(b.m.id)+'</span><span class="at-sec">'+esc(b.sec)+'</span>'+
+        (a.done?'<span class="at-badge bg-ok" style="background:var(--ok-bg);color:var(--ok-tx);">concluído</span>':'')+
+        '</div>'+
+        '<div class="act-problem">'+(b.m.codigo?'<b>'+esc(b.m.codigo)+'</b> '+esc(b.m.descricao||"")+'<br>':'')+esc(b.reasons.join(" · "))+'</div>'+
+        '<div class="act-fld"><label>ação definida</label><textarea class="act-acao" placeholder="o que foi decidido na reunião">'+esc(a.acao||"")+'</textarea></div>'+
+        '<div class="act-row2">'+
+          '<div class="act-fld"><label>responsável</label><input type="text" class="act-resp" value="'+esc(a.responsavel||"")+'" placeholder="nome"></div>'+
+          '<div class="act-fld"><label>prazo</label><input type="date" class="act-prazo" value="'+esc(a.prazo||"")+'"></div>'+
+        '</div>'+
+        '<div class="act-done-row"><label><input type="checkbox" class="act-done" '+(a.done?"checked":"")+'>ação concluída</label></div>'+
+      '</div>';
+    });
+  }
+
+  // ações avulsas (não ligadas a alerta do dia)
+  var avulsaIds=Object.keys(acoes).filter(function(k){return k.indexOf("manual_")===0;});
+  html+='<div class="reu-sec-title"><i class="ti ti-note"></i>ações avulsas</div>';
+  avulsaIds.forEach(function(id){
+    var a=acoes[id]||{};
+    var cls=a.done?"s-done":"s-warn";
+    html+='<div class="act-card '+cls+'" data-actid="'+esc(id)+'">'+
+      '<div class="act-top"><span class="at-id">avulsa</span>'+
+      (a.done?'<span class="at-badge" style="background:var(--ok-bg);color:var(--ok-tx);">concluído</span>':'')+
+      '</div>'+
+      '<div class="act-fld"><label>problema</label><textarea class="act-problema-txt" placeholder="descreva o problema">'+esc(a.problema||"")+'</textarea></div>'+
+      '<div class="act-fld"><label>ação definida</label><textarea class="act-acao" placeholder="o que foi decidido na reunião">'+esc(a.acao||"")+'</textarea></div>'+
+      '<div class="act-row2">'+
+        '<div class="act-fld"><label>responsável</label><input type="text" class="act-resp" value="'+esc(a.responsavel||"")+'" placeholder="nome"></div>'+
+        '<div class="act-fld"><label>prazo</label><input type="date" class="act-prazo" value="'+esc(a.prazo||"")+'"></div>'+
+      '</div>'+
+      '<div class="act-done-row"><label><input type="checkbox" class="act-done" '+(a.done?"checked":"")+'>ação concluída</label>'+
+      '<button class="mc-del" data-remove="'+esc(id)+'" style="margin-left:auto;" aria-label="remover"><i class="ti ti-trash"></i></button></div>'+
+    '</div>';
+  });
+  html+='<button class="add-row" id="addAvulsaBtn"><i class="ti ti-plus"></i>nova ação avulsa</button>';
+
+  if(okList.length){
+    html+='<div class="ok-list"><div class="ok-title">máquinas OK hoje</div><div class="ok-chips">'+
+      okList.map(function(id){return "<span>"+esc(id)+"</span>";}).join("")+
+    '</div></div>';
+  }
+
+  document.getElementById("reuContent").innerHTML=html;
+  wireReuniaoCards(dateKey);
+}
+
+function wireReuniaoCards(dateKey){
+  document.querySelectorAll(".act-card").forEach(function(card){
+    var id=card.getAttribute("data-actid");
+    function save(){
+      var acoes=loadAcoes(dateKey);
+      var cur=acoes[id]||{};
+      var acaoEl=card.querySelector(".act-acao");
+      var respEl=card.querySelector(".act-resp");
+      var prazoEl=card.querySelector(".act-prazo");
+      var doneEl=card.querySelector(".act-done");
+      var probEl=card.querySelector(".act-problema-txt");
+      cur.acao=acaoEl?acaoEl.value:cur.acao;
+      cur.responsavel=respEl?respEl.value:cur.responsavel;
+      cur.prazo=prazoEl?prazoEl.value:cur.prazo;
+      cur.done=doneEl?doneEl.checked:cur.done;
+      if(probEl) cur.problema=probEl.value;
+      acoes[id]=cur;
+      saveAcoes(dateKey,acoes);
+    }
+    card.querySelectorAll(".act-acao,.act-resp,.act-prazo,.act-problema-txt").forEach(function(el){
+      el.addEventListener("change",function(){save();});
+    });
+    var doneEl=card.querySelector(".act-done");
+    if(doneEl) doneEl.addEventListener("change",function(){save();renderReuniao();});
+    var rmBtn=card.querySelector("[data-remove]");
+    if(rmBtn) rmBtn.addEventListener("click",function(){
+      if(confirm("Remover essa ação avulsa?")){
+        var acoes=loadAcoes(dateKey); delete acoes[id]; saveAcoes(dateKey,acoes); renderReuniao();
+      }
+    });
+  });
+  var addBtn=document.getElementById("addAvulsaBtn");
+  if(addBtn) addBtn.addEventListener("click",function(){
+    var acoes=loadAcoes(dateKey);
+    var id="manual_"+Date.now();
+    acoes[id]={problema:"",acao:"",responsavel:"",prazo:"",done:false};
+    saveAcoes(dateKey,acoes);
+    renderReuniao();
+  });
+}
+
+// -------- SUMMARY --------
+function renderSummary(){
+  var tot=0,ok=0,err=0,wrn=0,perC=[];
+  dayData.forEach(function(sec){
+    var cOk=0,cErr=0,cTot=0;
+    sec.machines.forEach(function(m){
+      if(!(m.codigo||m.descricao||m.status)) return;
+      cTot++;tot++;
+      var s=rowState(m);
+      if(s==="ok"){ok++;cOk++;} else if(s==="err"){err++;cErr++;} else if(s==="warn")wrn++;
+    });
+    if(cTot>0) perC.push({name:sec.name,ok:cOk,err:cErr,tot:cTot});
+  });
+  var h='<div class="summary-title"><i class="ti ti-chart-bar" style="font-size:14px;"></i> resumo do dia</div>';
+  h+='<div class="kpis">';
+  h+='<div class="kpi"><div class="num">'+tot+'</div><div class="lbl">lançados</div></div>';
+  h+='<div class="kpi k-ok"><div class="num">'+ok+'</div><div class="lbl">ok</div></div>';
+  h+='<div class="kpi k-err"><div class="num">'+err+'</div><div class="lbl">problemas</div></div>';
+  h+='<div class="kpi k-wrn"><div class="num">'+wrn+'</div><div class="lbl">desvio 20%+</div></div>';
+  h+='</div>';
+  if(perC.length>0){
+    h+='<div class="sum-centros">';
+    perC.forEach(function(c){
+      var pOk=Math.round(c.ok/c.tot*100),pErr=Math.round(c.err/c.tot*100);
+      h+='<div class="sum-row"><span class="sname">'+esc(c.name)+'</span><span class="bar"><span class="f-ok" style="width:'+pOk+'%"></span><span class="f-err" style="width:'+pErr+'%"></span></span><span class="cnt">'+c.tot+' un</span></div>';
+    });
+    h+='</div>';
+  } else {
+    h+='<div style="font-size:12px;color:var(--tx3);text-align:center;padding:4px;">nenhum lançamento ainda</div>';
+  }
+  document.getElementById("summary").innerHTML=h;
+}
+function updateAlertBar(){
+  var pending=getAlerts().filter(function(a){return !a.m.sent;});
+  var bar=document.getElementById("alertBar");
+  if(pending.length>0){bar.style.display="flex";document.getElementById("alertMsg").textContent=pending.length+" alerta"+(pending.length>1?"s":"")+" pendente"+(pending.length>1?"s":"");}
+  else bar.style.display="none";
+}
+
+// -------- RENDER --------
+function render(){
+  renderSummary();
+  var secEl=document.getElementById("sections"); secEl.innerHTML="";
+  dayData.forEach(function(sec,si){
+    var wrap=document.createElement("div"); wrap.className="sec";
+    var hasErr=sec.machines.some(function(m){return rowState(m)==="err";});
+    var allOk=sec.machines.filter(function(m){return m.codigo||m.status;}).length>0&&sec.machines.filter(function(m){return m.codigo||m.status;}).every(function(m){return rowState(m)==="ok";});
+    var hdr=document.createElement("div"); hdr.className="sec-hdr";
+    var dot=document.createElement("span"); dot.className="dot"+(hasErr?" d-err":(allOk?" d-ok":""));
+    var nm=document.createElement("span"); nm.className="name"; nm.textContent=sec.name;
+    var filled=sec.machines.filter(function(m){return m.codigo||m.descricao||m.status;}).length;
+    var cnt=document.createElement("span"); cnt.className="cnt"; cnt.textContent=filled+"/"+sec.machines.length;
+    var chev=document.createElement("i"); chev.className="ti ti-chevron-"+(collapsed[si]?"right":"down");
+    hdr.appendChild(dot); hdr.appendChild(nm); hdr.appendChild(cnt); hdr.appendChild(chev);
+    hdr.addEventListener("click",function(){collapsed[si]=!collapsed[si];render();});
+    wrap.appendChild(hdr);
+    if(!collapsed[si]){
+      var body=document.createElement("div"); body.className="sec-body";
+      sec.machines.forEach(function(m,mi){body.appendChild(renderCard(sec,si,m,mi));});
+      var addBtn=document.createElement("button"); addBtn.className="add-row";
+      addBtn.innerHTML='<i class="ti ti-plus" style="font-size:15px;"></i>adicionar linha';
+      addBtn.addEventListener("click",function(){sec.machines.push(emptyM(""));schedSave();render();});
+      body.appendChild(addBtn);
+      wrap.appendChild(body);
+    }
+    secEl.appendChild(wrap);
+  });
+  updateAlertBar();
+}
+
+function renderCard(sec,si,m,mi){
+  var card=document.createElement("div"); card.className="mc";
+  var state=rowState(m);
+  if(state==="err") card.classList.add("s-alert");
+  else if(state==="warn") card.classList.add("s-warn");
+  else if(state==="ok") card.classList.add("s-ok");
+
+  var dv=devPct(m.tempoOF,m.tempoMaquina);
+  var st=(m.status||"").trim().toLowerCase();
+
+  var top=document.createElement("div"); top.className="mc-top";
+  var idInp=document.createElement("input"); idInp.className="mc-id-input"; idInp.type="text"; idInp.value=m.id||""; idInp.placeholder="M-000";
+  idInp.addEventListener("change",function(){m.id=idInp.value.trim();schedSave();});
+  top.appendChild(idInp);
+
+  var badges=document.createElement("span"); badges.className="badges";
+  if(st==="ok") badges.innerHTML='<span class="bg bg-ok">OK</span>';
+  else if(st) badges.innerHTML='<span class="bg bg-err">'+esc(m.status.substring(0,22))+'</span>';
+  if(dv!==null&&dv>=20) badges.innerHTML+='<span class="bg bg-wrn">Δ'+dv+'%</span>';
+  if(m.sent) badges.innerHTML+='<span class="bg bg-sent"><i class="ti ti-check" style="font-size:11px;"></i></span>';
+  top.appendChild(badges);
+
+  var del=document.createElement("button"); del.className="mc-del"; del.setAttribute("aria-label","remover");
+  del.innerHTML='<i class="ti ti-x"></i>';
+  del.addEventListener("click",function(){sec.machines.splice(mi,1);schedSave();render();});
+  top.appendChild(del);
+  card.appendChild(top);
+
+  function addF(parent,lbl,val,ph,cb,mono,isAcCod,descInpRef){
+    var wrap=document.createElement("div");
+    wrap.className=(isAcCod?"ac-wrap fld":"fld");
+    var l=document.createElement("label"); l.textContent=lbl; wrap.appendChild(l);
+    var inp=document.createElement("input"); inp.type="text"; inp.value=val||""; inp.placeholder=ph||"";
+    inp.style.padding="10px 12px";inp.style.width="100%";inp.style.fontFamily=mono?"'Roboto Mono',monospace":"inherit";
+    inp.style.fontSize="15px";inp.style.padding="10px 12px";inp.style.border="1.5px solid var(--bd)";inp.style.borderRadius="var(--r)";inp.style.background="var(--bg)";inp.style.color="var(--tx)";inp.style.boxSizing="border-box";
+    inp.addEventListener("focus",function(){inp.style.borderColor="var(--pri)";inp.style.outline="none";});
+    inp.addEventListener("blur",function(){inp.style.borderColor="var(--bd)";});
+    inp.addEventListener("change",function(){cb(inp.value);});
+    wrap.appendChild(inp);
+    parent.appendChild(wrap);
+    return inp;
+  }
+
+  var r1=document.createElement("div"); r1.className="r2";
+  // cod + descricao with autocomplete
+  var codWrap=document.createElement("div"); codWrap.className="ac-wrap fld"; codWrap.style.gridColumn="span 2";
+  var codLabel=document.createElement("label"); codLabel.textContent="cód. produto"; codWrap.appendChild(codLabel);
+  var codInp=document.createElement("input"); codInp.type="text"; codInp.value=m.codigo||""; codInp.placeholder="código";
+  codInp.style.cssText="padding:10px 12px;width:100%;font-family:'Roboto Mono',monospace;font-size:15px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);box-sizing:border-box;";
+  codInp.addEventListener("focus",function(){codInp.style.borderColor="var(--pri)";codInp.style.outline="none";});
+  codInp.addEventListener("blur",function(){codInp.style.borderColor="var(--bd)";});
+  codWrap.appendChild(codInp);
+  r1.appendChild(codWrap);
+
+  var potWrap=document.createElement("div"); potWrap.className="fld";
+  var potLabel=document.createElement("label"); potLabel.textContent="potenciômetro"; potWrap.appendChild(potLabel);
+  var potInp=document.createElement("input"); potInp.type="text"; potInp.value=m.potenciometro||""; potInp.placeholder="";
+  potInp.style.cssText="padding:10px 12px;width:100%;font-size:15px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);box-sizing:border-box;";
+  potInp.addEventListener("focus",function(){potInp.style.borderColor="var(--pri)";potInp.style.outline="none";});
+  potInp.addEventListener("blur",function(){potInp.style.borderColor="var(--bd)";});
+  potWrap.appendChild(potInp);
+
+  // descricao
+  var descWrap=document.createElement("div"); descWrap.className="fld";
+  var descLabel=document.createElement("label"); descLabel.textContent="descrição"; descWrap.appendChild(descLabel);
+  var descInp=document.createElement("input"); descInp.type="text"; descInp.value=m.descricao||""; descInp.placeholder="descrição do produto";
+  descInp.style.cssText="padding:10px 12px;width:100%;font-size:15px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);box-sizing:border-box;";
+  descInp.addEventListener("focus",function(){descInp.style.borderColor="var(--pri)";descInp.style.outline="none";});
+  descInp.addEventListener("blur",function(){descInp.style.borderColor="var(--bd)";});
+  descWrap.appendChild(descInp);
+
+  // wire autocomplete: código → descrição
+  buildAC(codInp, descInp);
+  codInp.addEventListener("change",function(){
+    m.codigo=codInp.value.trim();
+    var found=lookupDesc(m.codigo);
+    if(found && !m.descricao){descInp.value=found;m.descricao=found;}
+    schedSave(); renderSummary();
+  });
+  descInp.addEventListener("change",function(){m.descricao=descInp.value;schedSave();renderSummary();});
+  potInp.addEventListener("change",function(){m.potenciometro=potInp.value;schedSave();});
+
+  card.appendChild(r1);
+  card.appendChild(descWrap);
+
+  var r1b=document.createElement("div"); r1b.className="r2";
+  r1b.appendChild(potWrap);
+  card.appendChild(r1b);
+
+  // status
+  var statWrap=document.createElement("div"); statWrap.className="fld";
+  var statLabel=document.createElement("label"); statLabel.textContent="status"; statWrap.appendChild(statLabel);
+  var statInp=document.createElement("input"); statInp.type="text"; statInp.value=m.status||""; statInp.placeholder="OK / problema...";
+  statInp.style.cssText="padding:10px 12px;width:100%;font-size:15px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);box-sizing:border-box;";
+  statInp.addEventListener("focus",function(){statInp.style.borderColor="var(--pri)";statInp.style.outline="none";});
+  statInp.addEventListener("blur",function(){statInp.style.borderColor="var(--bd)";});
+  statInp.addEventListener("change",function(){m.status=statInp.value;m.sent=false;schedSave();render();});
+  statWrap.appendChild(statInp); card.appendChild(statWrap);
+
+  var r2=document.createElement("div"); r2.className="r2"; r2.style.gridTemplateColumns="1fr 1fr";
+  function mkTime(lbl,val,cb){
+    var w=document.createElement("div"); w.className="fld";
+    var l=document.createElement("label"); l.textContent=lbl; w.appendChild(l);
+    var i=document.createElement("input"); i.type="text"; i.value=val||""; i.placeholder="h:mm";
+    i.style.cssText="padding:10px 12px;width:100%;font-family:'Roboto Mono',monospace;font-size:15px;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);box-sizing:border-box;";
+    i.addEventListener("focus",function(){i.style.borderColor="var(--pri)";i.style.outline="none";});
+    i.addEventListener("blur",function(){i.style.borderColor="var(--bd)";});
+    i.addEventListener("change",function(){cb(i.value);m.sent=false;schedSave();render();});
+    w.appendChild(i); return w;
+  }
+  r2.appendChild(mkTime("tempo OF",m.tempoOF,function(v){m.tempoOF=v;}));
+  r2.appendChild(mkTime("tempo máquina",m.tempoMaquina,function(v){m.tempoMaquina=v;}));
+  card.appendChild(r2);
+  var r3=document.createElement("div"); r3.className="r2"; r3.style.gridTemplateColumns="1fr";
+  r3.appendChild(mkTime("tempo troca manual",m.tempoTroca,function(v){m.tempoTroca=v;}));
+  card.appendChild(r3);
+  return card;
+}
+
+// -------- ALERTS EMAIL --------
+document.getElementById("alertSend").addEventListener("click",function(){
+  if(!cfg.email){msg("configure o e-mail primeiro");document.getElementById("cfgPanel").style.display="block";window.scrollTo({top:0});return;}
+  var alerts=getAlerts().filter(function(a){return !a.m.sent;});
+  if(!alerts.length){msg("nenhum alerta pendente");return;}
+  var subj=encodeURIComponent((cfg.subject||"Alerta Quadro CNC")+" - "+dateIn.value);
+  var lines=["Quadro de Produção CNC - "+dateIn.value,"","Alertas identificados:",""];
+  alerts.forEach(function(a,i){
+    if(a.type==="status"){
+      lines.push((i+1)+") STATUS - "+a.sec.toUpperCase()+" / "+a.m.id);
+      lines.push("   Produto: "+a.m.codigo+" - "+a.m.descricao);
+      lines.push("   Status: "+a.m.status);
+    } else {
+      lines.push((i+1)+") DESVIO DE TEMPO - "+a.sec.toUpperCase()+" / "+a.m.id);
+      lines.push("   Produto: "+a.m.codigo+" - "+a.m.descricao);
+      lines.push("   Tempo OF: "+a.m.tempoOF+" / Máquina: "+a.m.tempoMaquina+" (Δ"+a.dev+"%)");
+    }
+    lines.push("");
+  });
+  window.location.href="mailto:"+cfg.email+"?subject="+subj+"&body="+encodeURIComponent(lines.join("\n"));
+  alerts.forEach(function(a){a.m.sent=true;});
+  schedSave(); render(); msg("e-mail aberto para envio");
+});
+
+// -------- XLSX --------
+function buildSheetData(){
+  var hdr=["","","CÓD. PRODUTO","DESCRIÇÃO","STATUS","POTENCIÔMETRO","TEMPO OF","TEMPO MÁQUINA","TEMPO TROCA MANUAL"];
+  var rows=[hdr]; var stCol=[null]; var merges=[]; var rIdx=1;
+  dayData.forEach(function(sec){
+    var startRow=rIdx;
+    sec.machines.forEach(function(m){
+      var st=(m.status||"").trim().toLowerCase();
+      rows.push([rIdx===startRow?sec.name.toUpperCase():"", m.id||"", m.codigo, m.descricao, m.status, m.potenciometro, m.tempoOF, m.tempoMaquina, m.tempoTroca]);
+      stCol.push(st==="ok"?"ok":(st?"err":null));
+      rIdx++;
+    });
+    var endRow=rIdx-1;
+    if(endRow>startRow) merges.push({s:{r:startRow,c:0},e:{r:endRow,c:0}});
+  });
+  return{rows:rows,stCol:stCol,merges:merges};
+}
+function styleWs(ws,stCol,merges){
+  var range=XLSX.utils.decode_range(ws["!ref"]);
+  var nc=range.e.c+1;
+  ws["!cols"]=[{wch:20},{wch:10},{wch:14},{wch:28},{wch:22},{wch:14},{wch:10},{wch:12},{wch:16}];
+  ws["!merges"]=[{s:{r:0,c:0},e:{r:0,c:1}}].concat(merges);
+  var thin={style:"thin",color:{rgb:"CBD5E1"}};
+  var ba={top:thin,bottom:thin,left:thin,right:thin};
+  for(var c=0;c<nc;c++){var a=XLSX.utils.encode_cell({r:0,c:c});if(ws[a])ws[a].s={fill:{patternType:"solid",fgColor:{rgb:"0F766E"}},font:{bold:true,color:{rgb:"FFFFFF"},sz:11,name:"Calibri"},alignment:{horizontal:"center",vertical:"center"},border:ba};}
+  for(var r=1;r<=range.e.r;r++){
+    var st=stCol[r];
+    for(var cc=0;cc<nc;cc++){
+      var ad=XLSX.utils.encode_cell({r:r,c:cc});
+      if(!ws[ad]) ws[ad]={t:"s",v:""};
+      var cs={border:ba,font:{sz:11,name:"Calibri"},alignment:{vertical:"center",wrapText:cc===3||cc===4}};
+      if(cc===0){ cs.font.bold=true; cs.alignment.horizontal="center"; cs.fill={patternType:"solid",fgColor:{rgb:"E2E8F0"}}; }
+      if(cc===1){ cs.font.bold=true; cs.alignment.horizontal="center"; cs.font.name="Calibri"; }
+      if(cc===4&&st==="ok"){cs.fill={patternType:"solid",fgColor:{rgb:"DCFCE7"}};cs.font.color={rgb:"15803D"};cs.font.bold=true;}
+      else if(cc===4&&st==="err"){cs.fill={patternType:"solid",fgColor:{rgb:"FEE2E2"}};cs.font.color={rgb:"B91C1C"};cs.font.bold=true;}
+      if(r%2===0&&!cs.fill) cs.fill={patternType:"solid",fgColor:{rgb:"F8FAFC"}};
+      ws[ad].s=cs;
+    }
+  }
+}
+function writeDay(wb,key){
+  var b=buildSheetData(); var ws=XLSX.utils.aoa_to_sheet(b.rows); styleWs(ws,b.stCol,b.merges);
+  ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:0,c:8}})};
+  if(wb.SheetNames.indexOf(key)>=0) wb.Sheets[key]=ws; else XLSX.utils.book_append_sheet(wb,ws,key);
+  return wb;
+}
+function dlWb(wb,name){
+  var out=XLSX.write(wb,{bookType:"xlsx",type:"array",cellStyles:true});
+  var blob=new Blob([out],{type:"application/octet-stream"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+}
+document.getElementById("xlsxNovo").addEventListener("click",function(){
+  var wb=XLSX.utils.book_new(); writeDay(wb,dateIn.value); dlWb(wb,"quadro_producao.xlsx"); msg("planilha criada — aba "+dateIn.value);
+});
+document.getElementById("xlsxExistente").addEventListener("click",function(){document.getElementById("fileIn").click();});
+document.getElementById("fileIn").addEventListener("change",function(e){
+  var file=e.target.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(ev){
+    try{var wb=XLSX.read(ev.target.result,{type:"array",cellStyles:true});writeDay(wb,dateIn.value);dlWb(wb,file.name);msg("aba "+dateIn.value+" atualizada");}
+    catch(err){msg("erro ao ler planilha");}
+  };
+  reader.readAsArrayBuffer(file); e.target.value="";
+});
+
+// -------- PRINT ROW HEIGHT CONTROL --------
+var rowHSlider=document.getElementById("rowHSlider");
+var rowHVal=document.getElementById("rowHVal");
+try{
+  var savedRH=localStorage.getItem("qcnc_rowh");
+  if(savedRH){ rowHSlider.value=savedRH; rowHVal.textContent=savedRH; }
+}catch(e){}
+rowHSlider.addEventListener("input",function(){
+  rowHVal.textContent=rowHSlider.value;
+});
+rowHSlider.addEventListener("change",function(){
+  try{ localStorage.setItem("qcnc_rowh", rowHSlider.value); }catch(e){}
+});
+
+// -------- PRINT --------
+document.getElementById("printBtn").addEventListener("click",function(){
+  var d=fd(dateIn.value);
+  var ps=document.getElementById("printSheet");
+  var sliderH=parseInt(rowHSlider.value,10)||19;
+
+  // usable height for A4 landscape, 5mm margins, minus title block and table header row
+  var USABLE_PX=Math.floor((210-10)*3.7795275591); // page height minus top/bottom margins, in css px
+  var HEADER_BLOCK_PX=40;   // title + date line
+  var TABLE_HEAD_PX=26;     // header row of the table
+  var availForRowsPx=USABLE_PX-HEADER_BLOCK_PX-TABLE_HEAD_PX;
+
+  var totalRows=0;
+  dayData.forEach(function(sec){ totalRows += sec.machines.length ? sec.machines.length : 1; });
+
+  var autoFitH=Math.floor(availForRowsPx/Math.max(totalRows,1));
+  var BASE_H=Math.max(8, Math.min(sliderH, autoFitH));
+
+  function centroFontFor(name, rowCount){
+    var availPx=rowCount*BASE_H;
+    var perCharPx=availPx/Math.max(name.length,1);
+    var f=Math.min(7.5, Math.max(4, perCharPx*0.82));
+    return f.toFixed(1);
+  }
+  var h='<div class="ps-header"><span class="ps-day">'+WD[d.getDay()]+'</span><span class="ps-date">'+pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+'</span></div>';
+  h+='<table class="ps"><colgroup><col style="width:18px"><col style="width:44px"><col style="width:11%"><col style="width:21%"><col style="width:23%"><col style="width:9%"><col style="width:8%"><col style="width:8%"><col style="width:9%"></colgroup>';
+  h+='<tr><th></th><th></th><th>CÓD. PRODUTO</th><th>DESCRIÇÃO</th><th>STATUS</th><th>Potenciômetro</th><th>Tempo OF</th><th>Tempo Máquina</th><th>Tempo Troca Manual</th></tr>';
+  dayData.forEach(function(sec){
+    var rows=sec.machines.length?sec.machines.slice():[emptyM("")];
+    var cf=centroFontFor(sec.name, rows.length);
+    rows.forEach(function(m,i){
+      var trStyle=(i===0)?' class="sec-first"':'';
+      h+='<tr'+trStyle+'>';
+      if(i===0) h+='<td class="centro" rowspan="'+rows.length+'" style="font-size:'+cf+'pt">'+esc(sec.name)+'</td>';
+      h+='<td class="mid" style="height:'+BASE_H+'px">'+esc(m.id)+'</td><td style="height:'+BASE_H+'px">'+esc(m.codigo)+'</td><td style="height:'+BASE_H+'px">'+esc(m.descricao)+'</td><td style="height:'+BASE_H+'px">'+esc(m.status)+'</td><td style="height:'+BASE_H+'px">'+esc(m.potenciometro)+'</td><td style="height:'+BASE_H+'px">'+esc(m.tempoOF)+'</td><td style="height:'+BASE_H+'px">'+esc(m.tempoMaquina)+'</td><td style="height:'+BASE_H+'px">'+esc(m.tempoTroca)+'</td></tr>';
+    });
+  });
+  h+='</table>';
+  ps.innerHTML=h;
+  if(autoFitH<sliderH) msg("ajustado automaticamente pra caber em 1 página");
+  else msg("na tela de impressão, selecione orientação PAISAGEM");
+  setTimeout(function(){ window.print(); }, 600);
+});
+
+// -------- SHARE --------
+document.getElementById("shareBtn").addEventListener("click",function(){
+  var lines=["Quadro Produção CNC - "+dateIn.value,""];
+  dayData.forEach(function(sec){
+    var filled=sec.machines.filter(function(m){return m.codigo||m.status;});
+    if(!filled.length) return;
+    lines.push(sec.name.toUpperCase());
+    filled.forEach(function(m){
+      var parts=[m.id,m.codigo,m.descricao,m.status].filter(Boolean);
+      var dv=devPct(m.tempoOF,m.tempoMaquina);
+      if(m.tempoOF||m.tempoMaquina) parts.push("OF:"+m.tempoOF+" Máq:"+m.tempoMaquina);
+      if(dv!==null&&dv>=20) parts.push("(Δ"+dv+"%)");
+      lines.push("  "+parts.join(" | "));
+    });
+    lines.push("");
+  });
+  var text=lines.join("\n");
+  if(navigator.share) navigator.share({title:"Quadro Produção "+dateIn.value,text:text}).catch(function(){});
+  else navigator.clipboard.writeText(text).then(function(){msg("copiado");}).catch(function(){msg("erro ao copiar");});
+});
+
+// -------- GOOGLE SHEETS --------
+var GS_SCOPE="https://www.googleapis.com/auth/spreadsheets";
+var gsCfg={clientId:"",sheetId:"",tabName:"Histórico"};
+var gsTokenClient=null, gsAccessToken=null;
+
+function loadGsCfg(){
+  try{var s=localStorage.getItem("qcnc_gscfg");if(s)gsCfg=JSON.parse(s);}catch(e){}
+  document.getElementById("gsClientId").value=gsCfg.clientId||"";
+  document.getElementById("gsSheetId").value=gsCfg.sheetId||"";
+  document.getElementById("gsTabName").value=gsCfg.tabName||"Histórico";
+}
+function saveGsCfg(){
+  gsCfg.clientId=document.getElementById("gsClientId").value.trim();
+  gsCfg.sheetId=document.getElementById("gsSheetId").value.trim();
+  gsCfg.tabName=document.getElementById("gsTabName").value.trim()||"Histórico";
+  try{localStorage.setItem("qcnc_gscfg",JSON.stringify(gsCfg));msg("configuração salva");}catch(e){msg("erro ao salvar");}
+}
+document.getElementById("gsSaveCfg").addEventListener("click",saveGsCfg);
+
+document.getElementById("gsConnectBtn").addEventListener("click",function(){
+  saveGsCfg();
+  if(!gsCfg.clientId){msg("preencha o Client ID primeiro");return;}
+  if(typeof google==="undefined"||!google.accounts||!google.accounts.oauth2){
+    document.getElementById("gsStatus").textContent="biblioteca do Google ainda não carregou (ou o domínio não está autorizado no Client ID) — tente novamente em instantes";
+    return;
+  }
+  gsTokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:gsCfg.clientId,
+    scope:GS_SCOPE,
+    callback:function(resp){
+      if(resp.error){document.getElementById("gsStatus").textContent="erro ao conectar: "+resp.error;return;}
+      gsAccessToken=resp.access_token;
+      document.getElementById("gsStatus").textContent="conectado ✓";
+      document.getElementById("gsSendBtn").style.display="block";
+      msg("conectado ao Google");
+    }
+  });
+  gsTokenClient.requestAccessToken();
+});
+
+var GS_HEADER=["Data","Centro","Máquina","Código","Descrição","Status","Potenciômetro","Tempo OF","Tempo Máquina","Tempo Troca","Ação Definida","Responsável","Prazo","Concluído"];
+
+function buildGsRows(){
+  var dateKey=dateIn.value;
+  var acoes=loadAcoes(dateKey);
+  var rows=[];
+  dayData.forEach(function(sec){
+    sec.machines.forEach(function(m){
+      if(!(m.codigo||m.status||m.tempoOF||m.tempoMaquina)) return;
+      var id=sec.name+"||"+m.id;
+      var a=acoes[id]||{};
+      rows.push([dateKey,sec.name,m.id,m.codigo,m.descricao,m.status,m.potenciometro,m.tempoOF,m.tempoMaquina,m.tempoTroca,a.acao||"",a.responsavel||"",a.prazo||"",a.done?"sim":""]);
+    });
+  });
+  Object.keys(acoes).filter(function(k){return k.indexOf("manual_")===0;}).forEach(function(k){
+    var a=acoes[k];
+    rows.push([dateKey,"","","","",a.problema||"","","","","",a.acao||"",a.responsavel||"",a.prazo||"",a.done?"sim":""]);
+  });
+  return rows;
+}
+
+function gsCheck(){
+  if(!gsAccessToken){msg("conecte com Google primeiro");return false;}
+  if(!gsCfg.sheetId){msg("preencha o ID da planilha e salve");return false;}
+  return true;
+}
+
+document.getElementById("gsHeaderBtn").addEventListener("click",function(){
+  saveGsCfg();
+  if(!gsCheck()) return;
+  var range=encodeURIComponent(gsCfg.tabName)+"!A1:N1";
+  var url="https://sheets.googleapis.com/v4/spreadsheets/"+gsCfg.sheetId+"/values/"+range+"?valueInputOption=USER_ENTERED";
+  fetch(url,{method:"PUT",headers:{"Authorization":"Bearer "+gsAccessToken,"Content-Type":"application/json"},body:JSON.stringify({values:[GS_HEADER]})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.error){document.getElementById("gsStatus").textContent="erro: "+data.error.message;msg("erro ao criar cabeçalho");}
+      else{document.getElementById("gsStatus").textContent="cabeçalho criado ✓";msg("cabeçalho criado");}
+    })
+    .catch(function(e){document.getElementById("gsStatus").textContent="erro: "+e.message;});
+});
+
+document.getElementById("gsSendBtn").addEventListener("click",function(){
+  if(!gsCheck()) return;
+  var rows=buildGsRows();
+  if(!rows.length){msg("nada pra enviar nesse dia");return;}
+  var range=encodeURIComponent(gsCfg.tabName)+"!A:N";
+  var url="https://sheets.googleapis.com/v4/spreadsheets/"+gsCfg.sheetId+"/values/"+range+":append?valueInputOption=USER_ENTERED";
+  fetch(url,{method:"POST",headers:{"Authorization":"Bearer "+gsAccessToken,"Content-Type":"application/json"},body:JSON.stringify({values:rows})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.error){document.getElementById("gsStatus").textContent="erro: "+data.error.message;msg("erro ao enviar");}
+      else{document.getElementById("gsStatus").textContent=rows.length+" linha(s) enviada(s) — "+new Date().toLocaleTimeString();msg("enviado pro Google Sheets");}
+    })
+    .catch(function(e){document.getElementById("gsStatus").textContent="erro: "+e.message;msg("erro ao enviar");});
+});
+
+// -------- DATE NAV --------
+document.getElementById("prev").addEventListener("click",function(){var d=fd(dateIn.value);d.setDate(d.getDate()-1);dateIn.value=dk(d);loadDate(dateIn.value);});
+document.getElementById("next").addEventListener("click",function(){var d=fd(dateIn.value);d.setDate(d.getDate()+1);dateIn.value=dk(d);loadDate(dateIn.value);});
+document.getElementById("todayBtn").addEventListener("click",function(){dateIn.value=dk(new Date());loadDate(dateIn.value);});
+dateIn.addEventListener("change",function(){loadDate(dateIn.value);});
+
+// -------- INIT --------
+loadCfg(); loadLayout(); loadProdutos(); loadGsCfg(); loadDate(dateIn.value); goPage("quadro");
+})();
+</script>
+</body>
+</html>

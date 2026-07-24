@@ -410,6 +410,7 @@ body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--b
           <div class="fld"><label>nome da aba</label><input type="text" id="gsTabName" placeholder="Histórico" /></div>
           <button class="btn-sec" id="gsSaveCfg" style="margin-bottom:10px;"><i class="ti ti-check"></i>salvar configuração</button>
           <button class="btn-sec" id="gsHeaderBtn" style="margin-bottom:10px;"><i class="ti ti-table"></i>criar cabeçalho na planilha</button>
+          <button class="btn-sec" id="gsFormatBtn" style="margin-bottom:10px;"><i class="ti ti-palette"></i>formatar planilha (cores, larguras, congelar)</button>
         </div>
         <div id="gsSummaryBlock" style="display:none;">
           <div class="ok-list" style="margin-bottom:14px;">
@@ -1558,6 +1559,90 @@ function gsCheck(){
   if(!gsCfg.sheetId){msg("preencha o ID da planilha e salve");return false;}
   return true;
 }
+
+// -------- FORMATAÇÃO DA PLANILHA --------
+function gsGetSheetNumericId(){
+  var url="https://sheets.googleapis.com/v4/spreadsheets/"+gsCfg.sheetId+"?fields=sheets.properties";
+  return fetch(url,{headers:{"Authorization":"Bearer "+gsAccessToken}})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data.error) throw new Error(data.error.message);
+      var found=(data.sheets||[]).find(function(s){return s.properties.title===gsCfg.tabName;});
+      if(!found) throw new Error("aba \""+gsCfg.tabName+"\" não encontrada na planilha");
+      return found.properties.sheetId;
+    });
+}
+function hexToRgb01(hex){
+  hex=hex.replace("#","");
+  return {red:parseInt(hex.substr(0,2),16)/255, green:parseInt(hex.substr(2,2),16)/255, blue:parseInt(hex.substr(4,2),16)/255};
+}
+document.getElementById("gsFormatBtn").addEventListener("click",function(){
+  saveGsCfg();
+  if(!gsCheck()) return;
+  document.getElementById("gsStatus").textContent="formatando planilha...";
+  gsGetSheetNumericId().then(function(sheetId){
+    var COL_W=[100,110,110,170,90,110,180,150,110,90,100,100,240,120,100,100]; // 16 colunas (A-P)
+    var brandBlue=hexToRgb01("0063AE");
+    var white={red:1,green:1,blue:1};
+    var okBg=hexToRgb01("dcfce7"), okTx=hexToRgb01("15803d");
+    var errBg=hexToRgb01("fee2e2"), errTx=hexToRgb01("b91c1c");
+
+    var requests=[];
+    // congelar cabeçalho
+    requests.push({updateSheetProperties:{properties:{sheetId:sheetId,gridProperties:{frozenRowCount:1}},fields:"gridProperties.frozenRowCount"}});
+    // header: fundo azul da marca, texto branco, negrito, centralizado
+    requests.push({repeatCell:{
+      range:{sheetId:sheetId,startRowIndex:0,endRowIndex:1,startColumnIndex:0,endColumnIndex:16},
+      cell:{userEnteredFormat:{backgroundColor:brandBlue,horizontalAlignment:"CENTER",textFormat:{foregroundColor:white,bold:true,fontFamily:"Arial",fontSize:10}}},
+      fields:"userEnteredFormat(backgroundColor,horizontalAlignment,textFormat)"
+    }});
+    // fonte padrão do corpo
+    requests.push({repeatCell:{
+      range:{sheetId:sheetId,startRowIndex:1,startColumnIndex:0,endColumnIndex:16},
+      cell:{userEnteredFormat:{textFormat:{fontFamily:"Arial",fontSize:10}}},
+      fields:"userEnteredFormat.textFormat"
+    }});
+    // largura das colunas
+    COL_W.forEach(function(w,i){
+      requests.push({updateDimensionProperties:{range:{sheetId:sheetId,dimension:"COLUMNS",startIndex:i,endIndex:i+1},properties:{pixelSize:w},fields:"pixelSize"}});
+    });
+    // formato de data (Data = col A/0, Prazo = col O/14)
+    [0,14].forEach(function(colIdx){
+      requests.push({repeatCell:{
+        range:{sheetId:sheetId,startRowIndex:1,startColumnIndex:colIdx,endColumnIndex:colIdx+1},
+        cell:{userEnteredFormat:{numberFormat:{type:"DATE",pattern:"dd/mm/yyyy"}}},
+        fields:"userEnteredFormat.numberFormat"
+      }});
+    });
+    // formatação condicional: Status (col H/7) - "ok" verde, outro texto vermelho
+    requests.push({addConditionalFormatRule:{rule:{
+      ranges:[{sheetId:sheetId,startRowIndex:1,startColumnIndex:7,endColumnIndex:8}],
+      booleanRule:{condition:{type:"TEXT_EQ",values:[{userEnteredValue:"OK"}]},format:{backgroundColor:okBg,textFormat:{foregroundColor:okTx}}}
+    },index:0}});
+    requests.push({addConditionalFormatRule:{rule:{
+      ranges:[{sheetId:sheetId,startRowIndex:1,startColumnIndex:7,endColumnIndex:8}],
+      booleanRule:{condition:{type:"CUSTOM_FORMULA",values:[{userEnteredValue:"=AND($H2<>\"\",NOT(REGEXMATCH(UPPER($H2),\"^OK$\")))"}]},format:{backgroundColor:errBg,textFormat:{foregroundColor:errTx}}}
+    },index:0}});
+    // Concluído (col P/15): "sim" verde, e Prazo vencido sem conclusão em vermelho na coluna Concluído
+    requests.push({addConditionalFormatRule:{rule:{
+      ranges:[{sheetId:sheetId,startRowIndex:1,startColumnIndex:15,endColumnIndex:16}],
+      booleanRule:{condition:{type:"TEXT_EQ",values:[{userEnteredValue:"sim"}]},format:{backgroundColor:okBg,textFormat:{foregroundColor:okTx}}}
+    },index:0}});
+    requests.push({addConditionalFormatRule:{rule:{
+      ranges:[{sheetId:sheetId,startRowIndex:1,startColumnIndex:15,endColumnIndex:16}],
+      booleanRule:{condition:{type:"CUSTOM_FORMULA",values:[{userEnteredValue:"=AND($O2<>\"\",$O2<TODAY(),$P2<>\"sim\")"}]},format:{backgroundColor:errBg,textFormat:{foregroundColor:errTx}}}
+    },index:0}});
+
+    var url="https://sheets.googleapis.com/v4/spreadsheets/"+gsCfg.sheetId+":batchUpdate";
+    return fetch(url,{method:"POST",headers:{"Authorization":"Bearer "+gsAccessToken,"Content-Type":"application/json"},body:JSON.stringify({requests:requests})})
+      .then(function(r){return r.json();});
+  }).then(function(data){
+    if(data.error){document.getElementById("gsStatus").textContent="erro: "+data.error.message;msg("erro ao formatar");}
+    else{document.getElementById("gsStatus").textContent="planilha formatada ✓";msg("planilha formatada");}
+  }).catch(function(e){
+    document.getElementById("gsStatus").textContent="erro: "+e.message; msg("erro ao formatar");
+  });
+});
 
 document.getElementById("gsHeaderBtn").addEventListener("click",function(){
   saveGsCfg();

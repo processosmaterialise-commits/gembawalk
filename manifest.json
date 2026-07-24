@@ -1,13 +1,15 @@
 {
-  "name": "Quadro Produção CNC",
-  "short_name": "Quadro CNC",
-  "description": "Quadro de produção CNC — ronda Gemba, histórico por máquina e painel de reunião",
+  "id": "./",
+  "name": "Gemba Walk",
+  "short_name": "Gemba Walk",
+  "description": "Gemba Walk — ronda de produção CNC, histórico por máquina e painel de reunião",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f8fafc",
-  "theme_color": "#0f766e",
+  "background_color": "#0a2438",
+  "theme_color": "#0063AE",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "icon-192.png",

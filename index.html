@@ -5,15 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0f766e">
-<title>Quadro Produção CNC</title>
+<meta name="theme-color" content="#0063AE">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Gemba Walk</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
---pri:#0f766e;--pri-dk:#115e59;--pri-lt:#ccfbf1;
+--pri:#0063AE;--pri-dk:#004a82;--pri-lt:#d6ecfa;
+--brand-dark:#0a2438;--brand-b1:#0063AE;--brand-b2:#00B0E9;
 --bg:#f8fafc;--card:#ffffff;
 --tx:#0f172a;--tx2:#64748b;--tx3:#94a3b8;
 --bd:#e2e8f0;
@@ -25,7 +30,7 @@
 --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
 }
 @media(prefers-color-scheme:dark){:root{
---pri:#14b8a6;--pri-dk:#0d9488;--pri-lt:#134e4a;
+--pri:#00B0E9;--pri-dk:#0092c4;--pri-lt:#0a3a52;
 --bg:#0f172a;--card:#1e293b;
 --tx:#f1f5f9;--tx2:#94a3b8;--tx3:#64748b;--bd:#334155;
 --ok-bg:#052e16;--ok-tx:#4ade80;
@@ -40,16 +45,16 @@ body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--b
 .page{display:none;}.page.active{display:block;}
 
 /* APP BAR */
-.appbar{position:sticky;top:0;z-index:50;background:var(--pri);color:#fff;padding-top:calc(10px + env(safe-area-inset-top,0));box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.appbar{position:sticky;top:0;z-index:50;background:linear-gradient(120deg,var(--brand-b1),var(--brand-b2));color:#fff;padding-top:calc(10px + env(safe-area-inset-top,0));box-shadow:0 2px 8px rgba(0,0,0,.15);}
 .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:8px;max-width:520px;margin:0 auto;padding:0 14px 10px;}
 .appbar-title{font-size:17px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .appbar button{background:rgba(255,255,255,.15);border:none;color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .appbar button:active{background:rgba(255,255,255,.3);}
-.datebar{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 14px 12px;background:var(--pri);max-width:520px;margin:0 auto;}
+.datebar{display:flex;align-items:center;justify-content:center;gap:8px;padding:0 14px 12px;background:linear-gradient(120deg,var(--brand-b1),var(--brand-b2));max-width:520px;margin:0 auto;}
 .datebar button{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:16px;display:flex;align-items:center;justify-content:center;}
 .datebar input[type=date]{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:20px;padding:7px 14px;font-size:14px;font-family:inherit;font-weight:500;text-align:center;color-scheme:dark;}
 .datebar .today-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;}
-.weekday-line{text-align:center;color:rgba(255,255,255,.85);font-size:12.5px;padding-bottom:10px;text-transform:capitalize;background:var(--pri);max-width:520px;margin:0 auto;}
+.weekday-line{text-align:center;color:rgba(255,255,255,.85);font-size:12.5px;padding-bottom:10px;text-transform:capitalize;background:linear-gradient(120deg,var(--brand-b1),var(--brand-b2));max-width:520px;margin:0 auto;}
 
 .content{padding:14px;}
 
@@ -220,6 +225,34 @@ body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--b
 .ok-chips{display:flex;flex-wrap:wrap;gap:5px;}
 .ok-chips span{font-size:11px;background:var(--ok-bg);color:var(--ok-tx);padding:3px 9px;border-radius:20px;font-weight:600;font-family:'Roboto Mono',monospace;}
 .reu-empty{text-align:center;padding:24px 16px;color:var(--tx3);font-size:13px;}
+.oa-card.oa-overdue{border-left-color:var(--err-tx);background:linear-gradient(90deg,var(--err-bg) 0%,var(--card) 12%);}
+.oa-card.oa-soon{border-left-color:var(--wrn-tx);background:linear-gradient(90deg,var(--wrn-bg) 0%,var(--card) 12%);}
+.oa-card.oa-normal{border-left-color:var(--tx3);}
+
+/* MENU DROPDOWN (cabeçalho) */
+.menu-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--card);border-radius:var(--r);box-shadow:0 6px 24px rgba(0,0,0,.18);min-width:190px;z-index:200;overflow:hidden;padding:6px;}
+.menu-dropdown button{width:100%;background:transparent;border:none;text-align:left;padding:11px 12px;font-family:inherit;font-size:14px;color:var(--tx);display:flex;align-items:center;gap:10px;border-radius:8px;cursor:pointer;}
+.menu-dropdown button:active,.menu-dropdown button:hover{background:var(--bg);}
+.menu-dropdown button i{font-size:18px;color:var(--tx2);}
+.menu-sep{height:1px;background:var(--bd);margin:4px 2px;}
+
+/* NAV BADGE */
+.nav-badge{position:absolute;top:2px;right:calc(50% - 22px);background:var(--err-tx);color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;}
+
+/* LOGIN / SELEÇÃO DA DUPLA */
+#loginScreen{position:fixed;inset:0;z-index:1000;background:var(--brand-dark);display:none;flex-direction:column;align-items:center;padding:calc(40px + env(safe-area-inset-top,0)) 22px 30px;overflow-y:auto;}
+.login-logo{width:130px;height:auto;margin-bottom:18px;}
+.login-title{color:#fff;font-size:22px;font-weight:700;margin-bottom:4px;text-align:center;}
+.login-subtitle{color:rgba(255,255,255,.65);font-size:13.5px;margin-bottom:28px;text-align:center;}
+.login-group{width:100%;max-width:420px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--rl);padding:16px;margin-bottom:16px;}
+.login-group-title{color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.login-chip-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.login-chip{background:rgba(255,255,255,.08);color:#fff;border:1.5px solid rgba(255,255,255,.18);border-radius:20px;padding:9px 16px;font-family:inherit;font-size:14px;cursor:pointer;}
+.login-chip.sel{background:linear-gradient(120deg,var(--brand-b1),var(--brand-b2));border-color:transparent;font-weight:700;}
+.login-empty{color:rgba(255,255,255,.5);font-size:12.5px;padding:6px 0;}
+.login-manage-link{background:transparent;border:none;color:rgba(255,255,255,.55);font-size:12px;font-family:inherit;text-decoration:underline;cursor:pointer;padding:2px 0;}
+.login-confirm-btn{width:100%;max-width:420px;background:linear-gradient(120deg,var(--brand-b1),var(--brand-b2));color:#fff;border:none;border-radius:var(--r);padding:15px;font-size:15px;font-weight:700;font-family:inherit;margin-top:8px;cursor:pointer;}
+.login-confirm-btn:disabled{opacity:.4;cursor:not-allowed;}
 
 /* PRINT */
 #printSheet{display:none;}
@@ -242,13 +275,50 @@ body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--b
 </style>
 </head>
 <body>
+
+<!-- LOGIN / SELEÇÃO DA DUPLA DA SEMANA -->
+<div id="loginScreen">
+  <svg class="login-logo" viewBox="0 0 189 60" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="lg1" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#0063AE"/><stop offset="1" stop-color="#00B0E9"/>
+    </linearGradient></defs>
+    <polygon points="0,58 66,38 0,38" fill="#0063AE"/>
+    <polygon points="71,37 189,37 189,0" fill="url(#lg1)"/>
+  </svg>
+  <div class="login-title">Gemba Walk</div>
+  <div class="login-subtitle">quem está na ronda desta semana?</div>
+
+  <div class="login-group">
+    <div class="login-group-title"><i class="ti ti-clipboard-list"></i>Eng. Processos</div>
+    <div class="login-chip-list" id="loginProcessistaList"></div>
+    <button type="button" class="login-manage-link" id="loginManageProcessistas">gerenciar nomes</button>
+  </div>
+
+  <div class="login-group">
+    <div class="login-group-title"><i class="ti ti-code"></i>Programadores</div>
+    <div class="login-chip-list" id="loginProgramadorList"></div>
+    <button type="button" class="login-manage-link" id="loginManageProgramadores">gerenciar nomes</button>
+  </div>
+
+  <button class="login-confirm-btn" id="loginConfirmBtn" disabled><i class="ti ti-login-2"></i> confirmar e entrar</button>
+</div>
+
 <div class="app">
 
   <!-- APP BAR -->
   <div class="appbar" id="mainAppbar">
     <div class="appbar-row">
-      <span class="appbar-title" id="appbarTitle">Quadro Produção CNC</span>
-      <button id="cfgBtn" aria-label="Configurações"><i class="ti ti-settings"></i></button>
+      <span class="appbar-title" id="appbarTitle">Gemba Walk</span>
+      <div style="position:relative;">
+        <button id="menuBtn" aria-label="Mais opções"><i class="ti ti-dots-vertical"></i></button>
+        <div id="menuDropdown" class="menu-dropdown" style="display:none;">
+          <button data-goto="maquinas"><i class="ti ti-settings-automation"></i>Máquinas</button>
+          <button data-goto="historico"><i class="ti ti-history"></i>Histórico</button>
+          <button data-goto="produtos"><i class="ti ti-package"></i>Produtos</button>
+          <div class="menu-sep"></div>
+          <button id="menuSair"><i class="ti ti-logout"></i>Trocar dupla / Sair</button>
+        </div>
+      </div>
     </div>
     <div class="datebar" id="datebarEl">
       <button id="prev" aria-label="anterior"><i class="ti ti-chevron-left"></i></button>
@@ -262,17 +332,10 @@ body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--b
   <!-- PAGE: QUADRO -->
   <div class="page active" id="pageQuadro">
     <div class="content">
-      <div class="cfg-card" id="cfgPanel" style="display:none;">
-        <div class="cfg-title"><i class="ti ti-settings" style="font-size:17px;"></i> configurações</div>
-        <div class="fld"><label>e-mail destino dos alertas</label><input type="email" id="cfgEmail" placeholder="setor@empresa.com" /></div>
-        <div class="fld"><label>assunto base</label><input type="text" id="cfgSubject" placeholder="Alerta Quadro Produção CNC" /></div>
-        <button class="btn-pri" id="cfgSave"><i class="ti ti-check"></i>salvar configurações</button>
-      </div>
       <div class="summary" id="summary"></div>
       <div id="alertBar" class="alert-bar" style="display:none;">
         <i class="ti ti-alert-triangle" style="font-size:22px;color:var(--err-tx);"></i>
         <span class="msg" id="alertMsg"></span>
-        <button id="alertSend"><i class="ti ti-mail"></i>notificar</button>
       </div>
       <div id="sections"></div>
     </div>
@@ -338,38 +401,55 @@ body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--b
   <!-- PAGE: EXPORTAR -->
   <div class="page" id="pageExportar">
     <div class="content">
-      <div class="cfg-card">
-        <div class="cfg-title"><i class="ti ti-file-spreadsheet" style="font-size:17px;"></i> planilha de produção</div>
-        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Cada dia vira uma aba na mesma planilha. Primeira vez: crie nova. Depois: abra a existente pra atualizar.</p>
-        <button class="btn-pri" id="xlsxNovo" style="margin-bottom:10px;"><i class="ti ti-file-plus"></i>criar planilha nova</button>
-        <button class="btn-sec" id="xlsxExistente"><i class="ti ti-folder-open"></i>abrir e atualizar existente</button>
-        <input type="file" id="fileIn" accept=".xlsx" style="display:none;" />
-      </div>
-      <div class="cfg-card">
-        <div class="cfg-title"><i class="ti ti-printer" style="font-size:17px;"></i> folha de impressão</div>
-        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Gera a folha no formato do quadro físico — A4 paisagem — pronta pra imprimir e colocar no acrílico.</p>
-        <div class="fld">
-          <label>altura da linha (px) — <span id="rowHVal">19</span>px</label>
-          <input type="range" id="rowHSlider" min="12" max="40" step="1" value="19" style="padding:0;" />
-        </div>
-        <button class="btn-pri" id="printBtn"><i class="ti ti-printer"></i>imprimir / salvar PDF</button>
-      </div>
-      <div class="cfg-card">
-        <div class="cfg-title"><i class="ti ti-share" style="font-size:17px;"></i> compartilhar resumo</div>
-        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Envia o resumo do dia por WhatsApp, e-mail ou qualquer outro app.</p>
-        <button class="btn-pri" id="shareBtn"><i class="ti ti-share"></i>compartilhar</button>
-      </div>
-      <div class="cfg-card">
+      <div class="cfg-card" id="gsMainCard">
         <div class="cfg-title"><i class="ti ti-brand-google" style="font-size:17px;"></i> planilha online (Google Sheets)</div>
-        <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Envia a ronda + as decisões da reunião do dia direto pra uma planilha no Google Sheets. Precisa de um Client ID (Google Cloud) e do app hospedado num endereço https — enquanto isso não estiver pronto, essa parte fica desativada e o resto do app continua funcionando normal.</p>
-        <div class="fld"><label>Client ID (Google Cloud)</label><input type="text" id="gsClientId" placeholder="xxxx.apps.googleusercontent.com" /></div>
-        <div class="fld"><label>ID da planilha</label><input type="text" id="gsSheetId" placeholder="cole o ID que aparece na URL da planilha" /></div>
-        <div class="fld"><label>nome da aba</label><input type="text" id="gsTabName" placeholder="Histórico" /></div>
-        <button class="btn-sec" id="gsSaveCfg" style="margin-bottom:10px;"><i class="ti ti-check"></i>salvar configuração</button>
+        <div id="gsConfigBlock">
+          <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Envia a ronda + as decisões da reunião do dia direto pra uma planilha no Google Sheets. Precisa de um Client ID (Google Cloud) e do app hospedado num endereço https — enquanto isso não estiver pronto, essa parte fica desativada e o resto do app continua funcionando normal.</p>
+          <div class="fld"><label>Client ID (Google Cloud)</label><input type="text" id="gsClientId" placeholder="xxxx.apps.googleusercontent.com" /></div>
+          <div class="fld"><label>ID da planilha</label><input type="text" id="gsSheetId" placeholder="cole o ID que aparece na URL da planilha" /></div>
+          <div class="fld"><label>nome da aba</label><input type="text" id="gsTabName" placeholder="Histórico" /></div>
+          <button class="btn-sec" id="gsSaveCfg" style="margin-bottom:10px;"><i class="ti ti-check"></i>salvar configuração</button>
+          <button class="btn-sec" id="gsHeaderBtn" style="margin-bottom:10px;"><i class="ti ti-table"></i>criar cabeçalho na planilha</button>
+        </div>
+        <div id="gsSummaryBlock" style="display:none;">
+          <div class="ok-list" style="margin-bottom:14px;">
+            <div class="ok-title"><i class="ti ti-circle-check" style="color:var(--ok-tx);"></i> conectado à planilha</div>
+            <div id="gsSummaryText" style="font-size:13.5px;color:var(--tx);"></div>
+          </div>
+          <button class="btn-sec" id="gsEditCfgBtn" style="margin-bottom:10px;"><i class="ti ti-settings"></i>editar configuração</button>
+        </div>
         <button class="btn-pri" id="gsConnectBtn" style="margin-bottom:10px;"><i class="ti ti-brand-google"></i>conectar com Google</button>
-        <button class="btn-sec" id="gsHeaderBtn" style="margin-bottom:10px;"><i class="ti ti-table"></i>criar cabeçalho na planilha</button>
-        <button class="btn-pri" id="gsSendBtn" style="display:none;"><i class="ti ti-cloud-upload"></i>enviar dia atual pro Google Sheets</button>
+        <button class="btn-pri" id="gsSendBtn" style="display:none;font-size:16px;padding:15px;"><i class="ti ti-cloud-upload"></i>enviar dia atual pro Google Sheets</button>
         <div id="gsStatus" style="font-size:12px;color:var(--tx2);margin-top:10px;"></div>
+      </div>
+
+      <button class="sec-hdr" id="maisOpcoesToggle" style="margin-bottom:10px;">
+        <i class="ti ti-dots" style="font-size:18px;color:var(--tx2);"></i>
+        <span style="flex:1;font-weight:600;font-size:13px;">mais opções de exportação</span>
+        <i class="ti ti-chevron-down" id="maisOpcoesChevron" style="font-size:18px;color:var(--tx2);"></i>
+      </button>
+      <div id="maisOpcoesBlock" style="display:none;">
+        <div class="cfg-card" style="display:none;">
+          <div class="cfg-title"><i class="ti ti-file-spreadsheet" style="font-size:17px;"></i> planilha de produção (Excel local)</div>
+          <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Cada dia vira uma aba na mesma planilha. Primeira vez: crie nova. Depois: abra a existente pra atualizar.</p>
+          <button class="btn-pri" id="xlsxNovo" style="margin-bottom:10px;"><i class="ti ti-file-plus"></i>criar planilha nova</button>
+          <button class="btn-sec" id="xlsxExistente"><i class="ti ti-folder-open"></i>abrir e atualizar existente</button>
+          <input type="file" id="fileIn" accept=".xlsx" style="display:none;" />
+        </div>
+        <div class="cfg-card">
+          <div class="cfg-title"><i class="ti ti-printer" style="font-size:17px;"></i> folha de impressão</div>
+          <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Gera a folha no formato do quadro físico — A4 paisagem — pronta pra imprimir e colocar no acrílico.</p>
+          <div class="fld">
+            <label>altura da linha (px) — <span id="rowHVal">19</span>px</label>
+            <input type="range" id="rowHSlider" min="12" max="40" step="1" value="19" style="padding:0;" />
+          </div>
+          <button class="btn-pri" id="printBtn"><i class="ti ti-printer"></i>imprimir / salvar PDF</button>
+        </div>
+        <div class="cfg-card">
+          <div class="cfg-title"><i class="ti ti-share" style="font-size:17px;"></i> compartilhar resumo</div>
+          <p style="font-size:13px;color:var(--tx2);margin-bottom:14px;">Envia o resumo do dia por WhatsApp, e-mail ou qualquer outro app.</p>
+          <button class="btn-pri" id="shareBtn"><i class="ti ti-share"></i>compartilhar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -379,10 +459,7 @@ body{font-family:'Roboto',-apple-system,'Segoe UI',sans-serif;background:var(--b
 <!-- BOTTOM NAV -->
 <div class="bottom-nav">
   <button id="navQuadro" class="active"><i class="ti ti-layout-board"></i>Quadro</button>
-  <button id="navMaquinas"><i class="ti ti-settings-automation"></i>Máquinas</button>
-  <button id="navHistorico"><i class="ti ti-history"></i>Histórico</button>
-  <button id="navReuniao"><i class="ti ti-users"></i>Reunião</button>
-  <button id="navProdutos"><i class="ti ti-package"></i>Produtos</button>
+  <button id="navReuniao" style="position:relative;"><i class="ti ti-users"></i>Reunião<span id="reuniaoBadge" class="nav-badge" style="display:none;">0</span></button>
   <button id="navExportar"><i class="ti ti-share-3"></i>Exportar</button>
 </div>
 
@@ -425,7 +502,7 @@ function esc(s){var d=document.createElement("div");d.textContent=s||"";return d
 // -------- STATE --------
 var dateIn=document.getElementById("dateIn");
 var today=new Date(); dateIn.value=dk(today);
-var dayData=null, cfg={email:"",subject:"Alerta Quadro Produção CNC"}, collapsed={}, saveTimer=null;
+var dayData=null, cfg={}, collapsed={}, saveTimer=null;
 var produtos={}; // {codigo: descricao}
 var editingProdCod=null; // for modal edit
 
@@ -435,7 +512,7 @@ function msg(t){toastEl.textContent=t;toastEl.classList.add("show");clearTimeout
 
 // -------- NAVIGATION --------
 var pages={quadro:"pageQuadro",maquinas:"pageMaquinas",historico:"pageHistorico",reuniao:"pageReuniao",produtos:"pageProdutos",exportar:"pageExportar"};
-var navBtns={quadro:"navQuadro",maquinas:"navMaquinas",historico:"navHistorico",reuniao:"navReuniao",produtos:"navProdutos",exportar:"navExportar"};
+var navBtns={quadro:"navQuadro",reuniao:"navReuniao",exportar:"navExportar"};
 var datebarEl=document.getElementById("datebarEl");
 var weekdayEl=document.getElementById("weekday");
 var appbarTitle=document.getElementById("appbarTitle");
@@ -443,43 +520,45 @@ var appbarTitle=document.getElementById("appbarTitle");
 function goPage(p){
   Object.keys(pages).forEach(function(k){
     document.getElementById(pages[k]).classList.toggle("active",k===p);
-    document.getElementById(navBtns[k]).classList.toggle("active",k===p);
+    var navId=navBtns[k];
+    if(navId) document.getElementById(navId).classList.toggle("active",k===p);
   });
   var isQuadro=p==="quadro";
   datebarEl.style.display=isQuadro?"flex":"none";
   weekdayEl.style.display=isQuadro?"block":"none";
-  var titles={quadro:"Quadro Produção CNC",maquinas:"Centros e Máquinas",historico:"Histórico por Máquina",reuniao:"Painel de Reunião",produtos:"Cadastro de Produtos",exportar:"Exportar / Imprimir"};
+  var titles={quadro:"Gemba Walk",maquinas:"Centros e Máquinas",historico:"Histórico por Máquina",reuniao:"Painel de Reunião",produtos:"Cadastro de Produtos",exportar:"Exportar"};
   appbarTitle.textContent=titles[p];
   if(p==="produtos") renderProdutos();
   if(p==="maquinas") renderMaquinas();
   if(p==="historico") renderHistorico();
   if(p==="reuniao") renderReuniao();
+  document.getElementById("menuDropdown").style.display="none";
 }
 
 document.getElementById("navQuadro").addEventListener("click",function(){goPage("quadro");});
-document.getElementById("navMaquinas").addEventListener("click",function(){goPage("maquinas");});
-document.getElementById("navHistorico").addEventListener("click",function(){goPage("historico");});
 document.getElementById("navReuniao").addEventListener("click",function(){goPage("reuniao");});
-document.getElementById("navProdutos").addEventListener("click",function(){goPage("produtos");});
 document.getElementById("navExportar").addEventListener("click",function(){goPage("exportar");});
+
+document.getElementById("menuBtn").addEventListener("click",function(e){
+  e.stopPropagation();
+  var dd=document.getElementById("menuDropdown");
+  dd.style.display=dd.style.display==="none"?"block":"none";
+});
+document.addEventListener("click",function(e){
+  var dd=document.getElementById("menuDropdown");
+  if(dd.style.display==="block" && !dd.contains(e.target) && e.target.id!=="menuBtn") dd.style.display="none";
+});
+document.querySelectorAll("#menuDropdown [data-goto]").forEach(function(btn){
+  btn.addEventListener("click",function(){ goPage(btn.getAttribute("data-goto")); });
+});
 
 // -------- CFG --------
 function loadCfg(){
   try{var s=localStorage.getItem("qcnc_cfg");if(s)cfg=JSON.parse(s);}catch(e){}
-  document.getElementById("cfgEmail").value=cfg.email||"";
-  document.getElementById("cfgSubject").value=cfg.subject||"";
 }
-function saveCfg(){
-  cfg.email=document.getElementById("cfgEmail").value.trim();
-  cfg.subject=document.getElementById("cfgSubject").value.trim();
-  try{localStorage.setItem("qcnc_cfg",JSON.stringify(cfg));msg("configurações salvas");}catch(e){msg("erro ao salvar");}
-  document.getElementById("cfgPanel").style.display="none";
-}
-document.getElementById("cfgBtn").addEventListener("click",function(){
-  var p=document.getElementById("cfgPanel");
-  p.style.display=p.style.display==="none"?"block":"none";
+document.getElementById("menuSair").addEventListener("click",function(){
+  if(confirm("Sair e voltar pra tela de seleção da dupla?")) doLogout();
 });
-document.getElementById("cfgSave").addEventListener("click",saveCfg);
 
 // -------- PRODUTOS --------
 function loadProdutos(){
@@ -876,6 +955,42 @@ function renderReuniao(){
     '<div class="kpi k-wrn"><div class="num">'+acoesDefinidas+'</div><div class="lbl">ações def.</div></div>';
 
   var html="";
+
+  // -------- AÇÕES EM ABERTO (todas as datas) --------
+  var openActions=scanOpenActions();
+  if(openActions.length){
+    html+='<div class="reu-sec-title"><i class="ti ti-clock-exclamation"></i>ações em aberto ('+openActions.length+')</div>';
+    var todayMid=new Date(); todayMid.setHours(0,0,0,0);
+    openActions.forEach(function(o){
+      var isManual=o.id.indexOf("manual_")===0;
+      var info=isManual?null:getMachineInfoForDate(o.date,o.id);
+      var prazoState="normal";
+      if(o.a.prazo){
+        var pd=fd(o.a.prazo); pd.setHours(0,0,0,0);
+        if(pd<todayMid) prazoState="overdue";
+        else if((pd-todayMid)<=2*86400000) prazoState="soon";
+      }
+      var cls="oa-"+prazoState;
+      var d=fd(o.date);
+      var dateLbl=pad(d.getDate())+"/"+pad(d.getMonth()+1);
+      html+='<div class="act-card oa-card '+cls+'" data-actid="'+esc(o.id)+'" data-date="'+esc(o.date)+'">'+
+        '<div class="act-top"><span class="hi-sec" style="background:var(--bg);">'+esc(dateLbl)+'</span>'+
+        '<span class="at-id">'+(isManual?"avulsa":esc(info.m.id))+'</span>'+
+        (info&&info.sec?'<span class="at-sec">'+esc(info.sec)+'</span>':'')+
+        (prazoState==="overdue"?'<span class="at-badge" style="background:var(--err-bg);color:var(--err-tx);margin-left:auto;">atrasada</span>':"")+
+        (prazoState==="soon"?'<span class="at-badge" style="background:var(--wrn-bg);color:var(--wrn-tx);margin-left:auto;">prazo próximo</span>':"")+
+        '</div>'+
+        '<div class="act-problem">'+(isManual?esc(o.a.problema||""):(info.m.codigo?'<b>'+esc(info.m.codigo)+'</b> '+esc(info.m.descricao||"")+'<br>':"")+esc(info.m.status?"status: "+info.m.status:""))+'</div>'+
+        '<div class="act-fld"><label>ação definida</label><textarea class="act-acao" placeholder="o que foi decidido">'+esc(o.a.acao||"")+'</textarea></div>'+
+        '<div class="act-row2">'+
+          '<div class="act-fld"><label>responsável</label><input type="text" class="act-resp" value="'+esc(o.a.responsavel||"")+'" placeholder="nome"></div>'+
+          '<div class="act-fld"><label>prazo</label><input type="date" class="act-prazo" value="'+esc(o.a.prazo||"")+'"></div>'+
+        '</div>'+
+        '<div class="act-done-row"><label><input type="checkbox" class="act-done">ação concluída</label></div>'+
+      '</div>';
+    });
+  }
+
   html+='<div class="reu-sec-title"><i class="ti ti-alert-triangle"></i>problemas do dia</div>';
   if(!problemIds.length){
     html+='<div class="reu-empty">nenhum problema registrado nessa data — tudo OK</div>';
@@ -933,8 +1048,9 @@ function renderReuniao(){
 function wireReuniaoCards(dateKey){
   document.querySelectorAll(".act-card").forEach(function(card){
     var id=card.getAttribute("data-actid");
+    var cardDate=card.getAttribute("data-date")||dateKey;
     function save(){
-      var acoes=loadAcoes(dateKey);
+      var acoes=loadAcoes(cardDate);
       var cur=acoes[id]||{};
       var acaoEl=card.querySelector(".act-acao");
       var respEl=card.querySelector(".act-resp");
@@ -947,7 +1063,7 @@ function wireReuniaoCards(dateKey){
       cur.done=doneEl?doneEl.checked:cur.done;
       if(probEl) cur.problema=probEl.value;
       acoes[id]=cur;
-      saveAcoes(dateKey,acoes);
+      saveAcoes(cardDate,acoes);
     }
     card.querySelectorAll(".act-acao,.act-resp,.act-prazo,.act-problema-txt").forEach(function(el){
       el.addEventListener("change",function(){save();});
@@ -957,7 +1073,7 @@ function wireReuniaoCards(dateKey){
     var rmBtn=card.querySelector("[data-remove]");
     if(rmBtn) rmBtn.addEventListener("click",function(){
       if(confirm("Remover essa ação avulsa?")){
-        var acoes=loadAcoes(dateKey); delete acoes[id]; saveAcoes(dateKey,acoes); renderReuniao();
+        var acoes=loadAcoes(cardDate); delete acoes[id]; saveAcoes(cardDate,acoes); renderReuniao();
       }
     });
   });
@@ -969,7 +1085,54 @@ function wireReuniaoCards(dateKey){
     saveAcoes(dateKey,acoes);
     renderReuniao();
   });
+  updateReuniaoBadge();
 }
+
+function scanOpenActions(){
+  var out=[];
+  for(var i=0;i<localStorage.length;i++){
+    var key=localStorage.key(i);
+    if(!key||key.indexOf("qcnc_acoes_")!==0) continue;
+    var dk=key.slice("qcnc_acoes_".length);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(dk)) continue;
+    var acoes; try{acoes=JSON.parse(localStorage.getItem(key));}catch(e){continue;}
+    if(!acoes) continue;
+    Object.keys(acoes).forEach(function(id){
+      var a=acoes[id];
+      if(!a||a.done) return;
+      if(!(a.acao||a.responsavel||a.prazo||a.problema)) return;
+      out.push({date:dk,id:id,a:a});
+    });
+  }
+  out.sort(function(x,y){return x.date<y.date?-1:1;});
+  return out;
+}
+function getMachineInfoForDate(dateKey,secAndId){
+  var idx=secAndId.indexOf("||");
+  var secName=idx>=0?secAndId.slice(0,idx):"";
+  var mid=idx>=0?secAndId.slice(idx+2):secAndId;
+  try{
+    var data=JSON.parse(localStorage.getItem("qcnc_"+dateKey));
+    if(Array.isArray(data)){
+      for(var i=0;i<data.length;i++){
+        if(data[i].name===secName){
+          var found=null;
+          (data[i].machines||[]).forEach(function(mm){ if((mm.id||"").trim()===mid) found=mm; });
+          if(found) return {sec:secName,m:found};
+        }
+      }
+    }
+  }catch(e){}
+  return {sec:secName,m:{id:mid}};
+}
+function updateReuniaoBadge(){
+  var n=scanOpenActions().length;
+  var badge=document.getElementById("reuniaoBadge");
+  if(!badge) return;
+  if(n>0){badge.style.display="flex";badge.textContent=n>99?"99+":n;}
+  else badge.style.display="none";
+}
+
 
 // -------- SUMMARY --------
 function renderSummary(){
@@ -1160,30 +1323,6 @@ function renderCard(sec,si,m,mi){
   return card;
 }
 
-// -------- ALERTS EMAIL --------
-document.getElementById("alertSend").addEventListener("click",function(){
-  if(!cfg.email){msg("configure o e-mail primeiro");document.getElementById("cfgPanel").style.display="block";window.scrollTo({top:0});return;}
-  var alerts=getAlerts().filter(function(a){return !a.m.sent;});
-  if(!alerts.length){msg("nenhum alerta pendente");return;}
-  var subj=encodeURIComponent((cfg.subject||"Alerta Quadro CNC")+" - "+dateIn.value);
-  var lines=["Quadro de Produção CNC - "+dateIn.value,"","Alertas identificados:",""];
-  alerts.forEach(function(a,i){
-    if(a.type==="status"){
-      lines.push((i+1)+") STATUS - "+a.sec.toUpperCase()+" / "+a.m.id);
-      lines.push("   Produto: "+a.m.codigo+" - "+a.m.descricao);
-      lines.push("   Status: "+a.m.status);
-    } else {
-      lines.push((i+1)+") DESVIO DE TEMPO - "+a.sec.toUpperCase()+" / "+a.m.id);
-      lines.push("   Produto: "+a.m.codigo+" - "+a.m.descricao);
-      lines.push("   Tempo OF: "+a.m.tempoOF+" / Máquina: "+a.m.tempoMaquina+" (Δ"+a.dev+"%)");
-    }
-    lines.push("");
-  });
-  window.location.href="mailto:"+cfg.email+"?subject="+subj+"&body="+encodeURIComponent(lines.join("\n"));
-  alerts.forEach(function(a){a.m.sent=true;});
-  schedSave(); render(); msg("e-mail aberto para envio");
-});
-
 // -------- XLSX --------
 function buildSheetData(){
   var hdr=["","","CÓD. PRODUTO","DESCRIÇÃO","STATUS","POTENCIÔMETRO","TEMPO OF","TEMPO MÁQUINA","TEMPO TROCA MANUAL"];
@@ -1339,14 +1478,36 @@ function loadGsCfg(){
   document.getElementById("gsClientId").value=gsCfg.clientId||"";
   document.getElementById("gsSheetId").value=gsCfg.sheetId||"";
   document.getElementById("gsTabName").value=gsCfg.tabName||"Histórico";
+  refreshGsBlockView();
+}
+function refreshGsBlockView(){
+  var configured=!!(gsCfg.clientId && gsCfg.sheetId);
+  document.getElementById("gsConfigBlock").style.display=configured?"none":"block";
+  document.getElementById("gsSummaryBlock").style.display=configured?"block":"none";
+  if(configured){
+    document.getElementById("gsSummaryText").textContent="planilha ID ..."+gsCfg.sheetId.slice(-6)+" · aba \""+gsCfg.tabName+"\"";
+  }
 }
 function saveGsCfg(){
   gsCfg.clientId=document.getElementById("gsClientId").value.trim();
   gsCfg.sheetId=document.getElementById("gsSheetId").value.trim();
   gsCfg.tabName=document.getElementById("gsTabName").value.trim()||"Histórico";
   try{localStorage.setItem("qcnc_gscfg",JSON.stringify(gsCfg));msg("configuração salva");}catch(e){msg("erro ao salvar");}
+  refreshGsBlockView();
 }
 document.getElementById("gsSaveCfg").addEventListener("click",saveGsCfg);
+document.getElementById("gsEditCfgBtn").addEventListener("click",function(){
+  document.getElementById("gsConfigBlock").style.display="block";
+  document.getElementById("gsSummaryBlock").style.display="none";
+});
+
+document.getElementById("maisOpcoesToggle").addEventListener("click",function(){
+  var block=document.getElementById("maisOpcoesBlock");
+  var chevron=document.getElementById("maisOpcoesChevron");
+  var open=block.style.display==="block";
+  block.style.display=open?"none":"block";
+  chevron.style.transform=open?"":"rotate(180deg)";
+});
 
 document.getElementById("gsConnectBtn").addEventListener("click",function(){
   saveGsCfg();
@@ -1369,23 +1530,25 @@ document.getElementById("gsConnectBtn").addEventListener("click",function(){
   gsTokenClient.requestAccessToken();
 });
 
-var GS_HEADER=["Data","Centro","Máquina","Código","Descrição","Status","Potenciômetro","Tempo OF","Tempo Máquina","Tempo Troca","Ação Definida","Responsável","Prazo","Concluído"];
+var GS_HEADER=["Data","Processista","Programador","Centro","Máquina","Código","Descrição","Status","Potenciômetro","Tempo OF","Tempo Máquina","Tempo Troca","Ação Definida","Responsável","Prazo","Concluído"];
 
 function buildGsRows(){
   var dateKey=dateIn.value;
   var acoes=loadAcoes(dateKey);
+  var proc=duplaSemana.processista||"";
+  var prog=duplaSemana.programador||"";
   var rows=[];
   dayData.forEach(function(sec){
     sec.machines.forEach(function(m){
       if(!(m.codigo||m.status||m.tempoOF||m.tempoMaquina)) return;
       var id=sec.name+"||"+m.id;
       var a=acoes[id]||{};
-      rows.push([dateKey,sec.name,m.id,m.codigo,m.descricao,m.status,m.potenciometro,m.tempoOF,m.tempoMaquina,m.tempoTroca,a.acao||"",a.responsavel||"",a.prazo||"",a.done?"sim":""]);
+      rows.push([dateKey,proc,prog,sec.name,m.id,m.codigo,m.descricao,m.status,m.potenciometro,m.tempoOF,m.tempoMaquina,m.tempoTroca,a.acao||"",a.responsavel||"",a.prazo||"",a.done?"sim":""]);
     });
   });
   Object.keys(acoes).filter(function(k){return k.indexOf("manual_")===0;}).forEach(function(k){
     var a=acoes[k];
-    rows.push([dateKey,"","","","",a.problema||"","","","","",a.acao||"",a.responsavel||"",a.prazo||"",a.done?"sim":""]);
+    rows.push([dateKey,proc,prog,"","","","",a.problema||"","","","","",a.acao||"",a.responsavel||"",a.prazo||"",a.done?"sim":""]);
   });
   return rows;
 }
@@ -1399,7 +1562,7 @@ function gsCheck(){
 document.getElementById("gsHeaderBtn").addEventListener("click",function(){
   saveGsCfg();
   if(!gsCheck()) return;
-  var range=encodeURIComponent(gsCfg.tabName)+"!A1:N1";
+  var range=encodeURIComponent(gsCfg.tabName)+"!A1:P1";
   var url="https://sheets.googleapis.com/v4/spreadsheets/"+gsCfg.sheetId+"/values/"+range+"?valueInputOption=USER_ENTERED";
   fetch(url,{method:"PUT",headers:{"Authorization":"Bearer "+gsAccessToken,"Content-Type":"application/json"},body:JSON.stringify({values:[GS_HEADER]})})
     .then(function(r){return r.json();})
@@ -1414,7 +1577,7 @@ document.getElementById("gsSendBtn").addEventListener("click",function(){
   if(!gsCheck()) return;
   var rows=buildGsRows();
   if(!rows.length){msg("nada pra enviar nesse dia");return;}
-  var range=encodeURIComponent(gsCfg.tabName)+"!A:N";
+  var range=encodeURIComponent(gsCfg.tabName)+"!A:P";
   var url="https://sheets.googleapis.com/v4/spreadsheets/"+gsCfg.sheetId+"/values/"+range+":append?valueInputOption=USER_ENTERED";
   fetch(url,{method:"POST",headers:{"Authorization":"Bearer "+gsAccessToken,"Content-Type":"application/json"},body:JSON.stringify({values:rows})})
     .then(function(r){return r.json();})
@@ -1431,8 +1594,103 @@ document.getElementById("next").addEventListener("click",function(){var d=fd(dat
 document.getElementById("todayBtn").addEventListener("click",function(){dateIn.value=dk(new Date());loadDate(dateIn.value);});
 dateIn.addEventListener("change",function(){loadDate(dateIn.value);});
 
+// -------- EQUIPE / DUPLA DA SEMANA --------
+var equipe={processistas:[],programadores:[]};
+var duplaSemana={week:"",processista:"",programador:""};
+var selProcessista=null, selProgramador=null;
+
+function mondayOfWeek(d){
+  var day=d.getDay();
+  var diff=(day===0?-6:1-day);
+  var monday=new Date(d); monday.setDate(d.getDate()+diff); monday.setHours(0,0,0,0);
+  return monday;
+}
+function weekKey(d){ return dk(mondayOfWeek(d)); }
+
+function loadEquipe(){ try{var s=localStorage.getItem("qcnc_equipe"); if(s) equipe=JSON.parse(s);}catch(e){} }
+function saveEquipe(){ try{localStorage.setItem("qcnc_equipe",JSON.stringify(equipe));}catch(e){} }
+function loadDuplaSemana(){ try{var s=localStorage.getItem("qcnc_dupla_semana"); if(s) duplaSemana=JSON.parse(s);}catch(e){} }
+function saveDuplaSemana(){ try{localStorage.setItem("qcnc_dupla_semana",JSON.stringify(duplaSemana));}catch(e){} }
+
+function checkLoginNeeded(){
+  loadEquipe(); loadDuplaSemana();
+  var curWeek=weekKey(new Date());
+  if(duplaSemana.week===curWeek && duplaSemana.processista && duplaSemana.programador){
+    hideLoginScreen();
+  } else {
+    showLoginScreen();
+  }
+}
+function showLoginScreen(){
+  document.getElementById("loginScreen").style.display="flex";
+  document.querySelector(".app").style.display="none";
+  document.querySelector(".bottom-nav").style.display="none";
+  selProcessista=null; selProgramador=null;
+  renderLoginLists();
+}
+function hideLoginScreen(){
+  document.getElementById("loginScreen").style.display="none";
+  document.querySelector(".app").style.display="block";
+  document.querySelector(".bottom-nav").style.display="flex";
+}
+function doLogout(){
+  duplaSemana={week:"",processista:"",programador:""};
+  saveDuplaSemana();
+  showLoginScreen();
+}
+function renderLoginLists(){
+  renderLoginGroup("processistas","loginProcessistaList","processista");
+  renderLoginGroup("programadores","loginProgramadorList","programador");
+  updateLoginConfirmBtn();
+}
+function renderLoginGroup(key,containerId,kind){
+  var container=document.getElementById(containerId);
+  var list=equipe[key]||[];
+  var html="";
+  if(!list.length) html='<div class="login-empty">nenhum nome cadastrado — toque em "gerenciar nomes" abaixo</div>';
+  list.forEach(function(name){
+    var sel=(kind==="processista"?selProcessista:selProgramador)===name;
+    html+='<button type="button" class="login-chip'+(sel?" sel":"")+'" data-kind="'+kind+'" data-name="'+esc(name)+'">'+esc(name)+'</button>';
+  });
+  container.innerHTML=html;
+  container.querySelectorAll(".login-chip").forEach(function(btn){
+    btn.addEventListener("click",function(){
+      var k=btn.getAttribute("data-kind"), name=btn.getAttribute("data-name");
+      if(k==="processista") selProcessista=name; else selProgramador=name;
+      renderLoginLists();
+    });
+  });
+}
+function updateLoginConfirmBtn(){
+  document.getElementById("loginConfirmBtn").disabled=!(selProcessista&&selProgramador);
+}
+function manageGroup(key){
+  var label=key==="processistas"?"Eng. Processos":"Programadores";
+  var current=(equipe[key]||[]).join(", ");
+  var resp=prompt("Nomes de "+label+" (separados por vírgula):",current);
+  if(resp===null) return;
+  equipe[key]=resp.split(",").map(function(s){return s.trim();}).filter(Boolean);
+  saveEquipe();
+  renderLoginLists();
+}
+document.getElementById("loginManageProcessistas").addEventListener("click",function(){manageGroup("processistas");});
+document.getElementById("loginManageProgramadores").addEventListener("click",function(){manageGroup("programadores");});
+document.getElementById("loginConfirmBtn").addEventListener("click",function(){
+  if(!(selProcessista&&selProgramador)) return;
+  duplaSemana={week:weekKey(new Date()),processista:selProcessista,programador:selProgramador};
+  saveDuplaSemana();
+  hideLoginScreen();
+});
+
 // -------- INIT --------
-loadCfg(); loadLayout(); loadProdutos(); loadGsCfg(); loadDate(dateIn.value); goPage("quadro");
+loadCfg(); loadLayout(); loadProdutos(); loadGsCfg(); loadDate(dateIn.value); goPage("quadro"); updateReuniaoBadge(); checkLoginNeeded();
+
+// -------- SERVICE WORKER (PWA) --------
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
 })();
 </script>
 </body>
